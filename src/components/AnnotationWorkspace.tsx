@@ -9,7 +9,7 @@ import AnnotationTools from './AnnotationTools';
 import AIAssistPanel from './AIAssistPanel';
 import CollaborationPanel from './CollaborationPanel';
 import LayersPanel from './LayersPanel';
-import { Project } from '../types';
+import { Project, Annotation } from '../types';
 
 interface AnnotationWorkspaceProps {
   project: Project;
@@ -19,6 +19,12 @@ interface AnnotationWorkspaceProps {
 const AnnotationWorkspace = ({ project }: AnnotationWorkspaceProps) => {
   const [selectedTool, setSelectedTool] = useState<string>('select');
   const [sidebarTab, setSidebarTab] = useState('ai');
+  const [aiAnnotations, setAiAnnotations] = useState<Annotation[]>([]);
+
+  const handleAIAnnotationsGenerated = (annotations: Annotation[]) => {
+    console.log('New AI annotations received:', annotations);
+    setAiAnnotations(prev => [...prev, ...annotations]);
+  };
 
   return (
     <div className="flex h-[calc(100vh-80px)]">
@@ -40,6 +46,8 @@ const AnnotationWorkspace = ({ project }: AnnotationWorkspaceProps) => {
               <span>1024 × 1024</span>
               <span>•</span>
               <span>T1-weighted MRI</span>
+              <span>•</span>
+              <span className="text-yellow-400">MONAI Processing Ready</span>
             </div>
           </div>
           
@@ -56,14 +64,17 @@ const AnnotationWorkspace = ({ project }: AnnotationWorkspaceProps) => {
             </Button>
             <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white">
               <Download className="w-4 h-4 mr-2" />
-              Export
+              Export DICOM
             </Button>
           </div>
         </div>
 
         {/* Image Viewer */}
         <div className="flex-1 bg-slate-950">
-          <ImageViewer selectedTool={selectedTool} />
+          <ImageViewer 
+            selectedTool={selectedTool} 
+            aiAnnotations={aiAnnotations}
+          />
         </div>
       </div>
 
@@ -73,7 +84,7 @@ const AnnotationWorkspace = ({ project }: AnnotationWorkspaceProps) => {
           <TabsList className="grid w-full grid-cols-4 bg-slate-800/50 m-2">
             <TabsTrigger value="ai" className="flex flex-col items-center space-y-1 py-3">
               <Zap className="w-4 h-4" />
-              <span className="text-xs">AI</span>
+              <span className="text-xs">MONAI</span>
             </TabsTrigger>
             <TabsTrigger value="layers" className="flex flex-col items-center space-y-1 py-3">
               <Layers className="w-4 h-4" />
@@ -91,7 +102,7 @@ const AnnotationWorkspace = ({ project }: AnnotationWorkspaceProps) => {
           
           <div className="flex-1 overflow-hidden">
             <TabsContent value="ai" className="h-full m-0">
-              <AIAssistPanel />
+              <AIAssistPanel onAnnotationsGenerated={handleAIAnnotationsGenerated} />
             </TabsContent>
             <TabsContent value="layers" className="h-full m-0">
               <LayersPanel />
@@ -103,13 +114,18 @@ const AnnotationWorkspace = ({ project }: AnnotationWorkspaceProps) => {
               <div className="p-4">
                 <h3 className="text-white font-semibold mb-4">Version History</h3>
                 <div className="space-y-3">
-                  {[1, 2, 3].map((version) => (
-                    <Card key={version} className="bg-slate-800/50 border-slate-700">
+                  {[
+                    { version: 3, time: '2 minutes ago', action: 'AI segmentation completed' },
+                    { version: 2, time: '15 minutes ago', action: 'Manual annotation added' },
+                    { version: 1, time: '1 hour ago', action: 'Project created' }
+                  ].map((entry) => (
+                    <Card key={entry.version} className="bg-slate-800/50 border-slate-700">
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-white text-sm font-medium">Version {version}</p>
-                            <p className="text-slate-400 text-xs">2 minutes ago</p>
+                            <p className="text-white text-sm font-medium">Version {entry.version}</p>
+                            <p className="text-slate-400 text-xs">{entry.time}</p>
+                            <p className="text-slate-300 text-xs">{entry.action}</p>
                           </div>
                           <Button variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300">
                             Restore

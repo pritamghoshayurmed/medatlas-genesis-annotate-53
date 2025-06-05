@@ -1,64 +1,143 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Zap, Brain, Target, Settings, Play, Pause, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { aiService, AIModel, SegmentationJob } from '../services/aiService';
+import { Annotation } from '../types';
 
-const AIAssistPanel = () => {
+interface AIAssistPanelProps {
+  onAnnotationsGenerated?: (annotations: Annotation[]) => void;
+}
+
+const AIAssistPanel = ({ onAnnotationsGenerated }: AIAssistPanelProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [confidence, setConfidence] = useState([75]);
+  const [availableModels, setAvailableModels] = useState<AIModel[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>('');
+  const [currentJob, setCurrentJob] = useState<SegmentationJob | null>(null);
+  const [aiSuggestions, setAiSuggestions] = useState<Annotation[]>([]);
+  const [pendingSuggestions, setPendingSuggestions] = useState<Annotation[]>([]);
 
-  const aiSuggestions = [
-    {
-      id: 1,
-      type: 'Tumor',
-      confidence: 89,
-      region: 'Frontal lobe',
-      status: 'pending'
-    },
-    {
-      id: 2,
-      type: 'Edema',
-      confidence: 72,
-      region: 'Parietal region',
-      status: 'accepted'
-    },
-    {
-      id: 3,
-      type: 'Ventricle',
-      confidence: 95,
-      region: 'Lateral ventricle',
-      status: 'pending'
+  useEffect(() => {
+    loadAvailableModels();
+  }, []);
+
+  const loadAvailableModels = async () => {
+    try {
+      const models = await aiService.getAvailableModels();
+      setAvailableModels(models);
+      if (models.length > 0) {
+        setSelectedModel(models[0].id);
+      }
+    } catch (error) {
+      console.error('Failed to load AI models:', error);
     }
-  ];
+  };
 
-  const handleStartProcessing = () => {
+  const handleStartProcessing = async () => {
+    if (!selectedModel) return;
+
     setIsProcessing(true);
-    setTimeout(() => setIsProcessing(false), 3000);
+    setCurrentJob(null);
+    setPendingSuggestions([]);
+
+    try {
+      const jobId = await aiService.startSegmentation(
+        'current_image', 
+        selectedModel,
+        (job: SegmentationJob) => {
+          setCurrentJob(job);
+          
+          if (job.status === 'completed' && job.results) {
+            const filteredResults = job.results.filter(
+              annotation => (annotation.confidence || 0) >= confidence[0] / 100
+            );
+            
+            setAiSuggestions(prev => [...prev, ...filteredResults]);
+            setPendingSuggestions(filteredResults);
+            setIsProcessing(false);
+            
+            if (onAnnotationsGenerated) {
+              onAnnotationsGenerated(filteredResults);
+            }
+          } else if (job.status === 'failed') {
+            setIsProcessing(false);
+          }
+        }
+      );
+      
+      console.log('Segmentation job started:', jobId);
+    } catch (error) {
+      console.error('Failed to start segmentation:', error);
+      setIsProcessing(false);
+    }
+  };
+
+  const handleAcceptSuggestion = (suggestionId: string) => {
+    setAiSuggestions(prev => 
+      prev.map(suggestion => 
+        suggestion.id === suggestionId 
+          ? { ...suggestion, isAIGenerated: false }
+          : suggestion
+      )
+    );
+    setPendingSuggestions(prev => 
+      prev.filter(suggestion => suggestion.id !== suggestionId)
+    );
+  };
+
+  const handleRejectSuggestion = (suggestionId: string) => {
+    setAiSuggestions(prev => 
+      prev.filter(suggestion => suggestion.id !== suggestionId)
+    );
+    setPendingSuggestions(prev => 
+      prev.filter(suggestion => suggestion.id !== suggestionId)
+    );
+  };
+
+  const getConfidenceColor = (confidence?: number) => {
+    if (!confidence) return 'text-gray-400 border-gray-400/30 bg-gray-400/10';
+    if (confidence >= 0.8) return 'text-green-400 border-green-400/30 bg-green-400/10';
+    if (confidence >= 0.6) return 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10';
+    return 'text-red-400 border-red-400/30 bg-red-400/10';
   };
 
   return (
     <div className="p-4 space-y-4">
-      {/* AI Status */}
+      {/* AI Model Selection */}
       <Card className="bg-slate-800/50 border-slate-700">
         <CardHeader className="pb-3">
           <CardTitle className="text-white text-sm flex items-center space-x-2">
             <Brain className="w-4 h-4 text-blue-400" />
-            <span>AI Assistant</span>
+            <span>MONAI AI Models</span>
             {isProcessing && (
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
             )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-300 text-sm">Model: MedSeg-v2.1</span>
-            <Badge variant="outline" className="text-green-400 border-green-400/30 bg-green-400/10">
-              Active
-            </Badge>
+          <div className="space-y-2">
+            <label className="text-slate-300 text-sm">Select Model</label>
+            <Select value={selectedModel} onValueChange={setSelectedModel}>
+              <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                <SelectValue placeholder="Choose AI model" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-600">
+                {availableModels.map((model) => (
+                  <SelectItem key={model.id} value={model.id} className="text-white">
+                    <div className="flex flex-col">
+                      <span>{model.name}</span>
+                      <span className="text-xs text-slate-400">{model.accuracy * 100}% accuracy</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="space-y-2">
@@ -79,7 +158,7 @@ const AIAssistPanel = () => {
           <div className="flex space-x-2">
             <Button
               onClick={handleStartProcessing}
-              disabled={isProcessing}
+              disabled={isProcessing || !selectedModel}
               className="flex-1 bg-gradient-to-r from-blue-500 to-teal-400 hover:from-blue-600 hover:to-teal-500 text-white"
               size="sm"
             >
@@ -91,7 +170,7 @@ const AIAssistPanel = () => {
               ) : (
                 <>
                   <Play className="w-3 h-3 mr-2" />
-                  Run AI
+                  Run Segmentation
                 </>
               )}
             </Button>
@@ -100,13 +179,13 @@ const AIAssistPanel = () => {
             </Button>
           </div>
 
-          {isProcessing && (
+          {currentJob && currentJob.status === 'processing' && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs text-slate-400">
-                <span>Analyzing regions...</span>
-                <span>67%</span>
+                <span>Running MONAI inference...</span>
+                <span>{currentJob.progress}%</span>
               </div>
-              <Progress value={67} className="h-1" />
+              <Progress value={currentJob.progress} className="h-1" />
             </div>
           )}
         </CardContent>
@@ -118,59 +197,77 @@ const AIAssistPanel = () => {
           <CardTitle className="text-white text-sm flex items-center space-x-2">
             <Target className="w-4 h-4 text-yellow-400" />
             <span>AI Suggestions</span>
-            <Badge variant="outline" className="text-yellow-400 border-yellow-400/30 bg-yellow-400/10 text-xs">
-              {aiSuggestions.filter(s => s.status === 'pending').length} new
-            </Badge>
+            {pendingSuggestions.length > 0 && (
+              <Badge variant="outline" className="text-yellow-400 border-yellow-400/30 bg-yellow-400/10 text-xs">
+                {pendingSuggestions.length} new
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {aiSuggestions.map((suggestion) => (
-            <div
-              key={suggestion.id}
-              className="p-3 bg-slate-700/30 rounded-lg border border-slate-600/50"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <span className="text-white text-sm font-medium">{suggestion.type}</span>
-                  <Badge
-                    variant="outline"
-                    className={`text-xs ${
-                      suggestion.confidence >= 80
-                        ? 'text-green-400 border-green-400/30 bg-green-400/10'
-                        : suggestion.confidence >= 60
-                        ? 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10'
-                        : 'text-red-400 border-red-400/30 bg-red-400/10'
-                    }`}
-                  >
-                    {suggestion.confidence}%
-                  </Badge>
-                </div>
-                <Badge
-                  variant="outline"
-                  className={`text-xs ${
-                    suggestion.status === 'accepted'
-                      ? 'text-green-400 border-green-400/30 bg-green-400/10'
-                      : 'text-blue-400 border-blue-400/30 bg-blue-400/10'
-                  }`}
-                >
-                  {suggestion.status}
-                </Badge>
-              </div>
-              
-              <p className="text-slate-400 text-xs mb-3">{suggestion.region}</p>
-              
-              {suggestion.status === 'pending' && (
-                <div className="flex space-x-2">
-                  <Button size="sm" className="flex-1 h-7 text-xs bg-green-600 hover:bg-green-700">
-                    Accept
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1 h-7 text-xs border-slate-600 text-slate-300">
-                    Reject
-                  </Button>
-                </div>
-              )}
+          {aiSuggestions.length === 0 ? (
+            <div className="text-center py-6">
+              <Brain className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+              <p className="text-slate-400 text-sm">No AI suggestions yet</p>
+              <p className="text-slate-500 text-xs">Run segmentation to get AI-powered annotations</p>
             </div>
-          ))}
+          ) : (
+            aiSuggestions.slice(-3).map((suggestion) => {
+              const isPending = pendingSuggestions.some(p => p.id === suggestion.id);
+              return (
+                <div
+                  key={suggestion.id}
+                  className="p-3 bg-slate-700/30 rounded-lg border border-slate-600/50"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-white text-sm font-medium">{suggestion.label}</span>
+                      <Badge
+                        variant="outline"
+                        className={`text-xs ${getConfidenceColor(suggestion.confidence)}`}
+                      >
+                        {suggestion.confidence ? `${Math.round(suggestion.confidence * 100)}%` : 'N/A'}
+                      </Badge>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={`text-xs ${
+                        isPending
+                          ? 'text-blue-400 border-blue-400/30 bg-blue-400/10'
+                          : 'text-green-400 border-green-400/30 bg-green-400/10'
+                      }`}
+                    >
+                      {isPending ? 'pending' : 'accepted'}
+                    </Badge>
+                  </div>
+                  
+                  <p className="text-slate-400 text-xs mb-3">
+                    Generated by {suggestion.author} • {suggestion.coordinates.length} points
+                  </p>
+                  
+                  {isPending && (
+                    <div className="flex space-x-2">
+                      <Button 
+                        size="sm" 
+                        className="flex-1 h-7 text-xs bg-green-600 hover:bg-green-700"
+                        onClick={() => handleAcceptSuggestion(suggestion.id)}
+                      >
+                        Accept
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 h-7 text-xs border-slate-600 text-slate-300"
+                        onClick={() => handleRejectSuggestion(suggestion.id)}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
         </CardContent>
       </Card>
 
@@ -179,18 +276,28 @@ const AIAssistPanel = () => {
         <CardHeader className="pb-3">
           <CardTitle className="text-white text-sm flex items-center space-x-2">
             <Zap className="w-4 h-4 text-purple-400" />
-            <span>Quick Actions</span>
+            <span>MONAI Quick Actions</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <Button variant="outline" size="sm" className="w-full justify-start border-slate-600 text-slate-300 hover:text-white">
-            Auto-segment all regions
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full justify-start border-slate-600 text-slate-300 hover:text-white"
+            onClick={() => setSelectedModel('organ_segmentation')}
+          >
+            Multi-organ segmentation
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full justify-start border-slate-600 text-slate-300 hover:text-white"
+            onClick={() => setSelectedModel('lesion_detection')}
+          >
+            Lesion detection
           </Button>
           <Button variant="outline" size="sm" className="w-full justify-start border-slate-600 text-slate-300 hover:text-white">
-            Detect anomalies
-          </Button>
-          <Button variant="outline" size="sm" className="w-full justify-start border-slate-600 text-slate-300 hover:text-white">
-            Generate report
+            Generate metrics report
           </Button>
         </CardContent>
       </Card>

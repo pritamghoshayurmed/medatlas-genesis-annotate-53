@@ -2,12 +2,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { ZoomIn, ZoomOut, RotateCcw, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Annotation } from '../types';
 
 interface ImageViewerProps {
   selectedTool: string;
+  aiAnnotations?: Annotation[];
 }
 
-const ImageViewer = ({ selectedTool }: ImageViewerProps) => {
+const ImageViewer = ({ selectedTool, aiAnnotations = [] }: ImageViewerProps) => {
   const [zoom, setZoom] = useState(100);
   const [annotations, setAnnotations] = useState<any[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -29,7 +31,37 @@ const ImageViewer = ({ selectedTool }: ImageViewerProps) => {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw existing annotations
+    // Draw AI annotations
+    aiAnnotations.forEach(annotation => {
+      ctx.strokeStyle = annotation.isAIGenerated ? '#fbbf24' : '#10b981'; // Yellow for AI, green for user
+      ctx.lineWidth = annotation.isAIGenerated ? 3 : 2;
+      ctx.beginPath();
+      
+      if (annotation.coordinates && annotation.coordinates.length > 0) {
+        annotation.coordinates.forEach((point: number[], index: number) => {
+          if (index === 0) {
+            ctx.moveTo(point[0], point[1]);
+          } else {
+            ctx.lineTo(point[0], point[1]);
+          }
+        });
+        
+        // Close the path for polygons
+        if (annotation.type === 'polygon' && annotation.coordinates.length > 2) {
+          ctx.closePath();
+        }
+        
+        ctx.stroke();
+        
+        // Add semi-transparent fill for AI annotations
+        if (annotation.isAIGenerated) {
+          ctx.fillStyle = 'rgba(251, 191, 36, 0.1)';
+          ctx.fill();
+        }
+      }
+    });
+
+    // Draw existing manual annotations
     annotations.forEach(annotation => {
       ctx.strokeStyle = annotation.color || '#3b82f6';
       ctx.lineWidth = 2;
@@ -58,7 +90,7 @@ const ImageViewer = ({ selectedTool }: ImageViewerProps) => {
       });
       ctx.stroke();
     }
-  }, [annotations, currentPath, isDrawing]);
+  }, [annotations, currentPath, isDrawing, aiAnnotations]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (selectedTool === 'brush' || selectedTool === 'polygon') {
@@ -95,6 +127,11 @@ const ImageViewer = ({ selectedTool }: ImageViewerProps) => {
       setIsDrawing(false);
     }
   };
+
+  const totalAnnotations = annotations.length + aiAnnotations.length;
+  const aiConfidence = aiAnnotations.length > 0 
+    ? Math.round((aiAnnotations.reduce((sum, ann) => sum + (ann.confidence || 0), 0) / aiAnnotations.length) * 100)
+    : 0;
 
   return (
     <div className="relative h-full flex flex-col">
@@ -135,7 +172,7 @@ const ImageViewer = ({ selectedTool }: ImageViewerProps) => {
         </Button>
       </div>
 
-      {/* Cursor Info */}
+      {/* Tool Info */}
       <div className="absolute top-4 right-4 z-10 bg-slate-900/80 backdrop-blur-lg rounded-lg p-2 border border-slate-700/50">
         <div className="text-slate-300 text-sm">
           Tool: <span className="text-white capitalize">{selectedTool}</span>
@@ -167,14 +204,20 @@ const ImageViewer = ({ selectedTool }: ImageViewerProps) => {
             onMouseLeave={() => setIsDrawing(false)}
           />
           
-          {/* AI Suggestions Overlay */}
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-1/3 left-1/3 w-32 h-24 border-2 border-dashed border-yellow-400 bg-yellow-400/10 rounded-lg">
-              <div className="absolute -top-6 left-0 bg-yellow-400 text-black text-xs px-2 py-1 rounded">
-                AI: Tumor (89%)
-              </div>
+          {/* AI Annotations Legend */}
+          {aiAnnotations.length > 0 && (
+            <div className="absolute top-4 left-4 bg-slate-900/90 rounded-lg p-2 space-y-1">
+              {aiAnnotations.map((annotation, index) => (
+                <div key={annotation.id} className="flex items-center space-x-2 text-xs">
+                  <div className="w-3 h-3 border-2 border-yellow-400 bg-yellow-400/20 rounded"></div>
+                  <span className="text-yellow-400">{annotation.label}</span>
+                  <span className="text-slate-300">
+                    {annotation.confidence ? `${Math.round(annotation.confidence * 100)}%` : ''}
+                  </span>
+                </div>
+              ))}
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -187,8 +230,11 @@ const ImageViewer = ({ selectedTool }: ImageViewerProps) => {
             <span>Position: 0.0, 0.0 mm</span>
           </div>
           <div className="flex items-center space-x-4">
-            <span>Annotations: {annotations.length}</span>
-            <span>AI Confidence: 89%</span>
+            <span>Annotations: {totalAnnotations}</span>
+            <span>AI Suggestions: {aiAnnotations.length}</span>
+            {aiConfidence > 0 && (
+              <span className="text-yellow-400">AI Confidence: {aiConfidence}%</span>
+            )}
           </div>
         </div>
       </div>
