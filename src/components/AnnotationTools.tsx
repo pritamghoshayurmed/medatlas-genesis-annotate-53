@@ -1,5 +1,5 @@
 
-import { MousePointer, Paintbrush, Square, Circle, Polygon, Eraser, Type, Ruler } from 'lucide-react';
+import { MousePointer, Paintbrush, Square, Circle, Pentagon, Eraser, Type, Ruler } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -14,7 +14,7 @@ const AnnotationTools = ({ selectedTool, onToolSelect }: AnnotationToolsProps) =
     { id: 'brush', icon: Paintbrush, label: 'Brush' },
     { id: 'rectangle', icon: Square, label: 'Rectangle' },
     { id: 'circle', icon: Circle, label: 'Circle' },
-    { id: 'polygon', icon: Polygon, label: 'Polygon' },
+    { id: 'polygon', icon: Pentagon, label: 'Polygon' },
     { id: 'eraser', icon: Eraser, label: 'Eraser' },
     { id: 'text', icon: Type, label: 'Text' },
     { id: 'measure', icon: Ruler, label: 'Measure' },
