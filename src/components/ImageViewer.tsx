@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { ZoomIn, ZoomOut, RotateCcw, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,13 +6,16 @@ import { Annotation } from '../types';
 interface ImageViewerProps {
   selectedTool: string;
   aiAnnotations?: Annotation[];
+  uploadedImage?: string;
+  uploadedImageName?: string;
 }
 
-const ImageViewer = ({ selectedTool, aiAnnotations = [] }: ImageViewerProps) => {
+const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploadedImageName }: ImageViewerProps) => {
   const [zoom, setZoom] = useState(100);
   const [annotations, setAnnotations] = useState<any[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentPath, setCurrentPath] = useState<any[]>([]);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
@@ -33,7 +35,7 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [] }: ImageViewerProps) => 
 
     // Draw AI annotations
     aiAnnotations.forEach(annotation => {
-      ctx.strokeStyle = annotation.isAIGenerated ? '#fbbf24' : '#10b981'; // Yellow for AI, green for user
+      ctx.strokeStyle = annotation.isAIGenerated ? '#fbbf24' : '#10b981';
       ctx.lineWidth = annotation.isAIGenerated ? 3 : 2;
       ctx.beginPath();
       
@@ -46,14 +48,12 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [] }: ImageViewerProps) => 
           }
         });
         
-        // Close the path for polygons
         if (annotation.type === 'polygon' && annotation.coordinates.length > 2) {
           ctx.closePath();
         }
         
         ctx.stroke();
         
-        // Add semi-transparent fill for AI annotations
         if (annotation.isAIGenerated) {
           ctx.fillStyle = 'rgba(251, 191, 36, 0.1)';
           ctx.fill();
@@ -91,6 +91,16 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [] }: ImageViewerProps) => 
       ctx.stroke();
     }
   }, [annotations, currentPath, isDrawing, aiAnnotations]);
+
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+    const img = imageRef.current;
+    const canvas = canvasRef.current;
+    if (img && canvas) {
+      canvas.width = img.offsetWidth;
+      canvas.height = img.offsetHeight;
+    }
+  };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (selectedTool === 'brush' || selectedTool === 'polygon') {
@@ -181,51 +191,68 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [] }: ImageViewerProps) => 
 
       {/* Main Image Container */}
       <div className="flex-1 flex items-center justify-center overflow-hidden">
-        <div 
-          className="relative"
-          style={{ transform: `scale(${zoom / 100})` }}
-        >
-          <img
-            ref={imageRef}
-            src="/placeholder.svg"
-            alt="Medical scan"
-            className="max-w-none bg-slate-800 rounded-lg shadow-2xl"
-            style={{ width: '600px', height: '600px' }}
-            draggable={false}
-          />
-          <canvas
-            ref={canvasRef}
-            width={600}
-            height={600}
-            className="absolute inset-0 cursor-crosshair"
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={() => setIsDrawing(false)}
-          />
-          
-          {/* AI Annotations Legend */}
-          {aiAnnotations.length > 0 && (
-            <div className="absolute top-4 left-4 bg-slate-900/90 rounded-lg p-2 space-y-1">
-              {aiAnnotations.map((annotation, index) => (
-                <div key={annotation.id} className="flex items-center space-x-2 text-xs">
-                  <div className="w-3 h-3 border-2 border-yellow-400 bg-yellow-400/20 rounded"></div>
-                  <span className="text-yellow-400">{annotation.label}</span>
-                  <span className="text-slate-300">
-                    {annotation.confidence ? `${Math.round(annotation.confidence * 100)}%` : ''}
-                  </span>
-                </div>
-              ))}
+        {uploadedImage ? (
+          <div 
+            className="relative"
+            style={{ transform: `scale(${zoom / 100})` }}
+          >
+            <img
+              ref={imageRef}
+              src={uploadedImage}
+              alt={uploadedImageName || "Uploaded medical image"}
+              className="max-w-none bg-slate-800 rounded-lg shadow-2xl"
+              style={{ maxWidth: '800px', maxHeight: '600px' }}
+              draggable={false}
+              onLoad={handleImageLoad}
+            />
+            {imageLoaded && (
+              <canvas
+                ref={canvasRef}
+                className="absolute inset-0 cursor-crosshair"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={() => setIsDrawing(false)}
+              />
+            )}
+            
+            {/* AI Annotations Legend */}
+            {aiAnnotations.length > 0 && (
+              <div className="absolute top-4 left-4 bg-slate-900/90 rounded-lg p-2 space-y-1">
+                {aiAnnotations.map((annotation) => (
+                  <div key={annotation.id} className="flex items-center space-x-2 text-xs">
+                    <div className="w-3 h-3 border-2 border-yellow-400 bg-yellow-400/20 rounded"></div>
+                    <span className="text-yellow-400">{annotation.label}</span>
+                    <span className="text-slate-300">
+                      {annotation.confidence ? `${Math.round(annotation.confidence * 100)}%` : ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center text-slate-400">
+            <div className="bg-slate-800 rounded-lg p-8 border-2 border-dashed border-slate-600">
+              <p className="text-lg mb-2">No image uploaded</p>
+              <p className="text-sm">Upload an image to start annotating</p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Bottom Info Bar */}
       <div className="bg-slate-900/80 backdrop-blur-lg border-t border-slate-700/50 px-4 py-2">
         <div className="flex items-center justify-between text-sm text-slate-300">
           <div className="flex items-center space-x-4">
-            <span>Slice: 45/128</span>
+            {uploadedImage && uploadedImageName ? (
+              <>
+                <span>File: {uploadedImageName}</span>
+                <span>•</span>
+              </>
+            ) : (
+              <span>Slice: 45/128</span>
+            )}
             <span>Window: 400/40</span>
             <span>Position: 0.0, 0.0 mm</span>
           </div>

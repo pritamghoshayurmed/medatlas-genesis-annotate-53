@@ -1,14 +1,14 @@
-
 import { useState } from 'react';
-import { Layers, Zap, Users, History, Download, Save, Undo, Redo } from 'lucide-react';
+import { Layers, Zap, Users, History, Download, Save, Undo, Redo, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ImageViewer from './ImageViewer';
 import AnnotationTools from './AnnotationTools';
 import AIAssistPanel from './AIAssistPanel';
 import CollaborationPanel from './CollaborationPanel';
 import LayersPanel from './LayersPanel';
+import ImageUpload from './ImageUpload';
 import { Project, Annotation } from '../types';
 
 interface AnnotationWorkspaceProps {
@@ -20,11 +20,31 @@ const AnnotationWorkspace = ({ project }: AnnotationWorkspaceProps) => {
   const [selectedTool, setSelectedTool] = useState<string>('select');
   const [sidebarTab, setSidebarTab] = useState('ai');
   const [aiAnnotations, setAiAnnotations] = useState<Annotation[]>([]);
+  const [uploadedImage, setUploadedImage] = useState<string>('');
+  const [uploadedImageName, setUploadedImageName] = useState<string>('');
 
   const handleAIAnnotationsGenerated = (annotations: Annotation[]) => {
     console.log('New AI annotations received:', annotations);
     setAiAnnotations(prev => [...prev, ...annotations]);
   };
+
+  const handleImageUpload = (imageUrl: string, fileName: string) => {
+    setUploadedImage(imageUrl);
+    setUploadedImageName(fileName);
+    console.log('Image uploaded:', fileName);
+  };
+
+  const handleClearImage = () => {
+    if (uploadedImage) {
+      URL.revokeObjectURL(uploadedImage);
+    }
+    setUploadedImage('');
+    setUploadedImageName('');
+    setAiAnnotations([]);
+    console.log('Image cleared');
+  };
+
+  const displayFileName = uploadedImageName || 'brain_scan_001.dcm';
 
   return (
     <div className="flex h-[calc(100vh-80px)]">
@@ -41,11 +61,21 @@ const AnnotationWorkspace = ({ project }: AnnotationWorkspaceProps) => {
         {/* Workspace Header */}
         <div className="bg-slate-800/50 border-b border-slate-700/50 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h3 className="text-white font-semibold">brain_scan_001.dcm</h3>
+            <h3 className="text-white font-semibold">{displayFileName}</h3>
             <div className="flex items-center space-x-2 text-sm text-slate-400">
-              <span>1024 × 1024</span>
-              <span>•</span>
-              <span>T1-weighted MRI</span>
+              {uploadedImage ? (
+                <>
+                  <span>Custom Upload</span>
+                  <span>•</span>
+                  <span className="text-green-400">Image Loaded</span>
+                </>
+              ) : (
+                <>
+                  <span>1024 × 1024</span>
+                  <span>•</span>
+                  <span>T1-weighted MRI</span>
+                </>
+              )}
               <span>•</span>
               <span className="text-yellow-400">MONAI Processing Ready</span>
             </div>
@@ -74,6 +104,8 @@ const AnnotationWorkspace = ({ project }: AnnotationWorkspaceProps) => {
           <ImageViewer 
             selectedTool={selectedTool} 
             aiAnnotations={aiAnnotations}
+            uploadedImage={uploadedImage}
+            uploadedImageName={uploadedImageName}
           />
         </div>
       </div>
@@ -102,7 +134,25 @@ const AnnotationWorkspace = ({ project }: AnnotationWorkspaceProps) => {
           
           <div className="flex-1 overflow-hidden">
             <TabsContent value="ai" className="h-full m-0">
-              <AIAssistPanel onAnnotationsGenerated={handleAIAnnotationsGenerated} />
+              <div className="p-4 space-y-4 h-full overflow-y-auto">
+                {/* Image Upload Section */}
+                <div>
+                  <h3 className="text-white font-semibold mb-3 flex items-center">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Medical Image
+                  </h3>
+                  <ImageUpload 
+                    onImageUpload={handleImageUpload}
+                    currentImage={uploadedImage}
+                    onClearImage={handleClearImage}
+                  />
+                </div>
+
+                {/* AI Assist Panel */}
+                <div className="flex-1">
+                  <AIAssistPanel onAnnotationsGenerated={handleAIAnnotationsGenerated} />
+                </div>
+              </div>
             </TabsContent>
             <TabsContent value="layers" className="h-full m-0">
               <LayersPanel />
