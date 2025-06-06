@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { ZoomIn, ZoomOut, RotateCcw, Maximize2, Grid, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
   const {
@@ -46,24 +48,36 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
     const img = imageRef.current;
     const canvas = canvasRef.current;
     if (img && canvas) {
-      const { offsetWidth, offsetHeight } = img;
-      setImageDimensions({ width: offsetWidth, height: offsetHeight });
-      canvas.width = offsetWidth;
-      canvas.height = offsetHeight;
+      // Get the actual rendered dimensions
+      const rect = img.getBoundingClientRect();
+      const displayWidth = rect.width;
+      const displayHeight = rect.height;
+      
+      setImageDimensions({ width: displayWidth, height: displayHeight });
+      canvas.width = displayWidth;
+      canvas.height = displayHeight;
+      console.log('Image loaded with dimensions:', displayWidth, 'x', displayHeight);
     }
   };
 
   const getMousePosition = (e: React.MouseEvent) => {
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (!rect) return { x: 0, y: 0 };
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
     return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
     };
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
     const pos = getMousePosition(e);
+    console.log('Mouse down at:', pos, 'Tool:', selectedTool);
     
     if (selectedTool === 'freehand' || selectedTool === 'spline') {
       startDrawing(pos, selectedTool);
@@ -73,15 +87,20 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    if (!drawingState.isDrawing) return;
+    
     const pos = getMousePosition(e);
     
-    if (drawingState.isDrawing && (selectedTool === 'freehand' || selectedTool === 'spline')) {
+    if (selectedTool === 'freehand' || selectedTool === 'spline') {
       updateDrawing(pos, selectedTool);
     }
   };
 
   const handleMouseUp = (e: React.MouseEvent) => {
+    if (!drawingState.isDrawing) return;
+    
     const pos = getMousePosition(e);
+    console.log('Mouse up at:', pos, 'Tool:', selectedTool);
     
     if (selectedTool === 'ruler' && drawingState.startPoint) {
       addMeasurement(drawingState.startPoint, pos);
@@ -100,11 +119,11 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw AI annotations
+    // Draw AI annotations with yellow/orange style
     aiAnnotations.forEach(annotation => {
       ctx.strokeStyle = '#fbbf24';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 4]);
       
       if (annotation.coordinates && annotation.coordinates.length > 0) {
         ctx.beginPath();
@@ -121,12 +140,24 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
         }
         
         ctx.stroke();
-        ctx.fillStyle = 'rgba(251, 191, 36, 0.1)';
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(251, 191, 36, 0.15)';
         ctx.fill();
+        
+        // Draw label
+        if (annotation.coordinates[0]) {
+          ctx.fillStyle = '#fbbf24';
+          ctx.font = 'bold 12px sans-serif';
+          ctx.fillText(
+            `${annotation.label} (${Math.round((annotation.confidence || 0) * 100)}%)`,
+            annotation.coordinates[0][0],
+            annotation.coordinates[0][1] - 5
+          );
+        }
       }
     });
 
-    // Draw manual annotations
+    // Draw manual annotations with green style
     annotations.forEach(annotation => {
       ctx.strokeStyle = '#10b981';
       ctx.lineWidth = 2;
@@ -142,20 +173,25 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
           }
         });
         
-        // Check if this is a measurement (rectangle type with measurement label)
+        // Check if this is a measurement
         if (annotation.type === 'rectangle' && annotation.label?.includes('Measurement:')) {
           ctx.stroke();
-          // Draw measurement text
+          // Draw measurement line and text
           const start = annotation.coordinates[0];
           const end = annotation.coordinates[1];
           const midX = (start[0] + end[0]) / 2;
           const midY = (start[1] + end[1]) / 2;
           
           ctx.fillStyle = '#10b981';
-          ctx.font = '12px sans-serif';
-          ctx.fillText(annotation.label || '', midX, midY - 5);
+          ctx.font = 'bold 14px sans-serif';
+          ctx.fillText(annotation.label || '', midX, midY - 8);
         } else {
+          if (annotation.type === 'polygon') {
+            ctx.closePath();
+          }
           ctx.stroke();
+          ctx.fillStyle = 'rgba(16, 185, 129, 0.1)';
+          ctx.fill();
         }
       }
     });
@@ -163,7 +199,7 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
     // Draw current drawing path
     if (drawingState.isDrawing && drawingState.currentPath.length > 0) {
       ctx.strokeStyle = '#3b82f6';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 3;
       ctx.setLineDash([]);
       ctx.beginPath();
       drawingState.currentPath.forEach((point, index) => {
@@ -174,11 +210,21 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
         }
       });
       ctx.stroke();
+      
+      // Draw points for better visibility
+      drawingState.currentPath.forEach(point => {
+        ctx.fillStyle = '#3b82f6';
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
     }
   }, [annotations, drawingState, aiAnnotations, imageLoaded]);
 
   const heatmapPoints = generateHeatmapPoints(imageDimensions.width, imageDimensions.height, aiAnnotations);
   const metrics = calculateAnnotationMetrics(allAnnotations);
+
+  console.log('Heatmap points generated:', heatmapPoints.length, 'Image dimensions:', imageDimensions);
 
   return (
     <div className="relative h-full flex flex-col bg-slate-950">
@@ -205,11 +251,14 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
         </Button>
       </div>
 
-      {/* Tool info - mobile optimized */}
+      {/* Tool info */}
       <div className="absolute top-2 right-2 z-20 bg-slate-900/90 backdrop-blur-lg rounded-lg p-1 md:p-2 border border-slate-700/50">
         <div className="text-slate-300 text-xs md:text-sm">
           <span className="hidden md:inline">Tool: </span>
           <span className="text-white capitalize text-xs">{selectedTool}</span>
+          {drawingState.isDrawing && (
+            <span className="text-green-400 ml-2">Drawing...</span>
+          )}
         </div>
       </div>
 
@@ -217,6 +266,7 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
       <div className="flex-1 flex items-center justify-center overflow-hidden p-2 md:p-4">
         {uploadedImage ? (
           <div 
+            ref={containerRef}
             className="relative"
             style={{ transform: `scale(${zoom / 100})` }}
           >
@@ -239,11 +289,15 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
               <>
                 <canvas
                   ref={canvasRef}
-                  className="absolute inset-0 cursor-crosshair"
+                  className="absolute inset-0 cursor-crosshair z-10"
                   onMouseDown={handleMouseDown}
                   onMouseMove={handleMouseMove}
                   onMouseUp={handleMouseUp}
-                  onMouseLeave={() => finishDrawing(selectedTool)}
+                  onMouseLeave={() => drawingState.isDrawing && finishDrawing(selectedTool)}
+                  style={{
+                    width: imageDimensions.width,
+                    height: imageDimensions.height
+                  }}
                 />
                 
                 {showHeatmap && heatmapPoints.length > 0 && (
@@ -251,7 +305,7 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
                     points={heatmapPoints}
                     imageWidth={imageDimensions.width}
                     imageHeight={imageDimensions.height}
-                    opacity={0.4}
+                    opacity={0.5}
                   />
                 )}
               </>
@@ -267,7 +321,7 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
         )}
       </div>
 
-      {/* Bottom stats - mobile optimized */}
+      {/* Bottom stats */}
       <div className="bg-slate-900/90 backdrop-blur-lg border-t border-slate-700/50 px-2 md:px-4 py-1 md:py-2">
         <div className="flex items-center justify-between text-xs md:text-sm text-slate-300">
           <div className="flex items-center space-x-2 md:space-x-4">

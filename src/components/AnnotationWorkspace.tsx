@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Layers, Zap, Users, History, Download, Save, Undo, Redo, Upload, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,7 @@ import LayersPanel from './LayersPanel';
 import ImageUpload from './ImageUpload';
 import { Project, Annotation } from '../types';
 import { useIsMobile } from '../hooks/use-mobile';
+import { useAnnotationTools } from '../hooks/useAnnotationTools';
 
 interface AnnotationWorkspaceProps {
   project: Project;
@@ -28,9 +28,12 @@ const AnnotationWorkspace = ({ project }: AnnotationWorkspaceProps) => {
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
 
-  const handleAIAnnotationsGenerated = (annotations: Annotation[]) => {
-    console.log('New AI annotations received:', annotations);
-    setAiAnnotations(prev => [...prev, ...annotations]);
+  // Get annotations from the hook to pass to layers panel
+  const { annotations } = useAnnotationTools();
+
+  const handleAIAnnotationsGenerated = (newAnnotations: Annotation[]) => {
+    console.log('New AI annotations received:', newAnnotations);
+    setAiAnnotations(prev => [...prev, ...newAnnotations]);
   };
 
   const handleImageUpload = (imageUrl: string, fileName: string) => {
@@ -99,7 +102,7 @@ const AnnotationWorkspace = ({ project }: AnnotationWorkspaceProps) => {
 
       {/* Main workspace */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Header - mobile optimized */}
+        {/* Header */}
         <div className="bg-slate-800/90 border-b border-slate-700/50 px-2 md:px-4 py-2 md:py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2 md:space-x-4 min-w-0">
             <h3 className="text-white font-semibold text-sm md:text-base truncate">{displayFileName}</h3>
@@ -209,7 +212,10 @@ const AnnotationWorkspace = ({ project }: AnnotationWorkspaceProps) => {
               </div>
             </TabsContent>
             <TabsContent value="layers" className="h-full m-0">
-              <LayersPanel />
+              <LayersPanel 
+                annotations={annotations}
+                aiAnnotations={aiAnnotations}
+              />
             </TabsContent>
             <TabsContent value="team" className="h-full m-0">
               <CollaborationPanel />
