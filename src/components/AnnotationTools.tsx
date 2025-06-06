@@ -1,5 +1,5 @@
 
-import { MousePointer, Paintbrush, Square, Circle, Pentagon, Eraser, Type, Ruler } from 'lucide-react';
+import { MousePointer, Paintbrush, PenTool, Ruler, Target, Eraser, Type, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -10,19 +10,19 @@ interface AnnotationToolsProps {
 
 const AnnotationTools = ({ selectedTool, onToolSelect }: AnnotationToolsProps) => {
   const tools = [
-    { id: 'select', icon: MousePointer, label: 'Select' },
-    { id: 'brush', icon: Paintbrush, label: 'Brush' },
-    { id: 'rectangle', icon: Square, label: 'Rectangle' },
-    { id: 'circle', icon: Circle, label: 'Circle' },
-    { id: 'polygon', icon: Pentagon, label: 'Polygon' },
+    { id: 'select', icon: MousePointer, label: 'Select & Move' },
+    { id: 'freehand', icon: Paintbrush, label: 'Freehand Drawing' },
+    { id: 'spline', icon: PenTool, label: 'Spline Curve' },
+    { id: 'ruler', icon: Ruler, label: 'Measurement Tool' },
+    { id: 'marker', icon: Target, label: 'Point Marker' },
     { id: 'eraser', icon: Eraser, label: 'Eraser' },
-    { id: 'text', icon: Type, label: 'Text' },
-    { id: 'measure', icon: Ruler, label: 'Measure' },
+    { id: 'text', icon: Type, label: 'Text Annotation' },
+    { id: 'ai-assist', icon: Zap, label: 'AI Smart Select' },
   ];
 
   return (
     <TooltipProvider>
-      <div className="space-y-2">
+      <div className="space-y-1">
         {tools.map((tool) => (
           <Tooltip key={tool.id}>
             <TooltipTrigger asChild>
@@ -30,17 +30,17 @@ const AnnotationTools = ({ selectedTool, onToolSelect }: AnnotationToolsProps) =
                 variant={selectedTool === tool.id ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => onToolSelect(tool.id)}
-                className={`w-10 h-10 p-0 ${
+                className={`w-12 h-12 p-0 transition-all duration-200 ${
                   selectedTool === tool.id 
-                    ? 'bg-blue-500 hover:bg-blue-600 text-white' 
-                    : 'text-slate-400 hover:text-white hover:bg-slate-700'
+                    ? 'bg-teal-500 hover:bg-teal-600 text-white shadow-lg shadow-teal-500/25' 
+                    : 'text-slate-400 hover:text-white hover:bg-slate-700/80'
                 }`}
               >
                 <tool.icon className="w-4 h-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="right">
-              <p>{tool.label}</p>
+            <TooltipContent side="right" className="bg-slate-800 text-white border-slate-700">
+              <p className="text-sm">{tool.label}</p>
             </TooltipContent>
           </Tooltip>
         ))}
