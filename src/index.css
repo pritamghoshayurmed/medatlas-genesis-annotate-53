@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -35,20 +36,17 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Custom teal-to-blue gradient variables */
+    --gradient-from: #1A3C4D;
+    --gradient-to: #4A90E2;
   }
 
   .dark {
@@ -97,5 +95,57 @@
 
   body {
     @apply bg-background text-foreground;
+    background: linear-gradient(to bottom, var(--gradient-from), var(--gradient-to));
+    min-height: 100vh;
+  }
+
+  /* Mobile optimizations */
+  @media (max-width: 768px) {
+    html {
+      font-size: 14px;
+    }
+    
+    .mobile-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
+  /* Custom gradient background class */
+  .gradient-bg {
+    background: linear-gradient(to bottom, var(--gradient-from), var(--gradient-to));
+  }
+
+  /* AI segmentation dots animation */
+  .ai-dot {
+    animation: pulse-dot 2s infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% {
+      opacity: 0.7;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+  }
+
+  /* Mobile-specific styles */
+  @media (max-width: 640px) {
+    .mobile-sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      z-index: 50;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease-in-out;
+    }
+    
+    .mobile-sidebar.open {
+      transform: translateX(0);
+    }
   }
 }

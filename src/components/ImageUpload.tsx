@@ -53,19 +53,19 @@ const ImageUpload = ({ onImageUpload, currentImage, onClearImage }: ImageUploadP
 
   if (currentImage) {
     return (
-      <Card className="bg-slate-800/50 border-slate-700">
+      <Card className="bg-slate-800/60 border-slate-600/50 backdrop-blur-lg">
         <CardContent className="p-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Image className="w-4 h-4 text-green-400" />
-              <span className="text-slate-300 text-sm">Image uploaded</span>
+              <Image className="w-4 h-4 text-teal-400" />
+              <span className="text-slate-200 text-sm">Image uploaded</span>
             </div>
             <div className="flex items-center space-x-2">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleClick}
-                className="text-slate-300 hover:text-white text-xs"
+                className="text-slate-300 hover:text-white hover:bg-slate-700/50 text-xs"
               >
                 Change
               </Button>
@@ -74,7 +74,7 @@ const ImageUpload = ({ onImageUpload, currentImage, onClearImage }: ImageUploadP
                   variant="ghost"
                   size="sm"
                   onClick={onClearImage}
-                  className="text-slate-300 hover:text-white"
+                  className="text-slate-300 hover:text-white hover:bg-slate-700/50"
                 >
                   <X className="w-4 h-4" />
                 </Button>
@@ -87,24 +87,24 @@ const ImageUpload = ({ onImageUpload, currentImage, onClearImage }: ImageUploadP
   }
 
   return (
-    <Card className="bg-slate-800/50 border-slate-700">
+    <Card className="bg-slate-800/60 border-slate-600/50 backdrop-blur-lg">
       <CardContent className="p-4">
         <div
-          className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+          className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all duration-200 ${
             isDragOver
-              ? 'border-blue-400 bg-blue-400/10'
-              : 'border-slate-600 hover:border-slate-500'
+              ? 'border-teal-400 bg-teal-400/10 shadow-lg shadow-teal-400/20'
+              : 'border-slate-500 hover:border-slate-400 hover:bg-slate-700/20'
           }`}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onClick={handleClick}
         >
-          <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-          <p className="text-slate-300 text-sm mb-1">
+          <Upload className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+          <p className="text-slate-200 text-sm mb-1">
             Drop an image here or click to upload
           </p>
-          <p className="text-slate-500 text-xs">
+          <p className="text-slate-400 text-xs">
             Supports JPEG, PNG, DICOM images
           </p>
         </div>

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ZoomIn, ZoomOut, RotateCcw, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Annotation } from '../types';
+import { useIsMobile } from '../hooks/use-mobile';
 
 interface ImageViewerProps {
   selectedTool: string;
@@ -10,18 +11,83 @@ interface ImageViewerProps {
   uploadedImageName?: string;
 }
 
+interface SegmentationDot {
+  id: string;
+  x: number;
+  y: number;
+  color: string;
+  region: string;
+  confidence: number;
+}
+
 const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploadedImageName }: ImageViewerProps) => {
   const [zoom, setZoom] = useState(100);
   const [annotations, setAnnotations] = useState<any[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentPath, setCurrentPath] = useState<any[]>([]);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [segmentationDots, setSegmentationDots] = useState<SegmentationDot[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const isMobile = useIsMobile();
 
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 400));
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 25, 25));
   const handleResetZoom = () => setZoom(100);
+
+  // Generate realistic AI segmentation dots when AI annotations are received
+  useEffect(() => {
+    if (aiAnnotations.length > 0 && uploadedImage && imageRef.current) {
+      const img = imageRef.current;
+      const newDots: SegmentationDot[] = [];
+      
+      // Define brain regions with colors similar to the reference image
+      const brainRegions = [
+        { name: 'Frontal Cortex', color: '#FF6B6B', count: 8 },
+        { name: 'Parietal Cortex', color: '#4ECDC4', count: 6 },
+        { name: 'Temporal Cortex', color: '#45B7D1', count: 7 },
+        { name: 'Occipital Cortex', color: '#96CEB4', count: 5 },
+        { name: 'Cerebellum', color: '#FFEAA7', count: 4 },
+        { name: 'Brainstem', color: '#DDA0DD', count: 3 },
+        { name: 'Hippocampus', color: '#FFB6C1', count: 4 },
+        { name: 'Amygdala', color: '#98FB98', count: 3 }
+      ];
+
+      let dotId = 0;
+      brainRegions.forEach(region => {
+        for (let i = 0; i < region.count; i++) {
+          // Generate positions that would be realistic for brain scans
+          // Center regions more towards the middle, avoiding edges
+          const centerX = img.offsetWidth * 0.5;
+          const centerY = img.offsetHeight * 0.5;
+          const radiusX = img.offsetWidth * 0.35;
+          const radiusY = img.offsetHeight * 0.35;
+          
+          // Create clustered regions for more realistic appearance
+          const angle = (Math.PI * 2 * i) / region.count + Math.random() * 0.5;
+          const distance = 0.3 + Math.random() * 0.7; // Vary distance from center
+          
+          const x = centerX + (Math.cos(angle) * radiusX * distance) + (Math.random() - 0.5) * 50;
+          const y = centerY + (Math.sin(angle) * radiusY * distance) + (Math.random() - 0.5) * 50;
+          
+          // Ensure dots stay within image bounds
+          const clampedX = Math.max(20, Math.min(img.offsetWidth - 20, x));
+          const clampedY = Math.max(20, Math.min(img.offsetHeight - 20, y));
+          
+          newDots.push({
+            id: `dot-${dotId++}`,
+            x: clampedX,
+            y: clampedY,
+            color: region.color,
+            region: region.name,
+            confidence: 0.75 + Math.random() * 0.2 // 75-95% confidence
+          });
+        }
+      });
+      
+      setSegmentationDots(newDots);
+    }
+  }, [aiAnnotations, uploadedImage]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -173,13 +239,15 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
         >
           <RotateCcw className="w-4 h-4" />
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-slate-300 hover:text-white"
-        >
-          <Maximize2 className="w-4 h-4" />
-        </Button>
+        {!isMobile && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-slate-300 hover:text-white"
+          >
+            <Maximize2 className="w-4 h-4" />
+          </Button>
+        )}
       </div>
 
       {/* Tool Info */}
@@ -201,7 +269,10 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
               src={uploadedImage}
               alt={uploadedImageName || "Uploaded medical image"}
               className="max-w-none bg-slate-800 rounded-lg shadow-2xl"
-              style={{ maxWidth: '800px', maxHeight: '600px' }}
+              style={{ 
+                maxWidth: isMobile ? '350px' : '800px', 
+                maxHeight: isMobile ? '350px' : '600px' 
+              }}
               draggable={false}
               onLoad={handleImageLoad}
             />
@@ -216,9 +287,24 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
               />
             )}
             
+            {/* AI Segmentation Dots */}
+            {segmentationDots.map((dot) => (
+              <div
+                key={dot.id}
+                className="absolute w-3 h-3 rounded-full border-2 border-white ai-dot"
+                style={{
+                  left: dot.x - 6,
+                  top: dot.y - 6,
+                  backgroundColor: dot.color,
+                  boxShadow: '0 0 10px rgba(0,0,0,0.5)'
+                }}
+                title={`${dot.region} (${Math.round(dot.confidence * 100)}%)`}
+              />
+            ))}
+            
             {/* AI Annotations Legend */}
-            {aiAnnotations.length > 0 && (
-              <div className="absolute top-4 left-4 bg-slate-900/90 rounded-lg p-2 space-y-1">
+            {(aiAnnotations.length > 0 || segmentationDots.length > 0) && (
+              <div className="absolute top-4 left-4 bg-slate-900/90 rounded-lg p-2 space-y-1 max-w-48">
                 {aiAnnotations.map((annotation) => (
                   <div key={annotation.id} className="flex items-center space-x-2 text-xs">
                     <div className="w-3 h-3 border-2 border-yellow-400 bg-yellow-400/20 rounded"></div>
@@ -228,12 +314,17 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
                     </span>
                   </div>
                 ))}
+                {segmentationDots.length > 0 && (
+                  <div className="text-xs text-slate-300 border-t border-slate-600 pt-1 mt-1">
+                    <span className="text-teal-400">AI Segmentation: {segmentationDots.length} regions</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
         ) : (
           <div className="text-center text-slate-400">
-            <div className="bg-slate-800 rounded-lg p-8 border-2 border-dashed border-slate-600">
+            <div className="bg-slate-800 rounded-lg p-8 border-2 border-dashed border-slate-600 mx-4">
               <p className="text-lg mb-2">No image uploaded</p>
               <p className="text-sm">Upload an image to start annotating</p>
             </div>
@@ -247,20 +338,23 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
           <div className="flex items-center space-x-4">
             {uploadedImage && uploadedImageName ? (
               <>
-                <span>File: {uploadedImageName}</span>
-                <span>•</span>
+                <span className="hidden md:inline">File: {uploadedImageName}</span>
+                {!isMobile && <span>•</span>}
               </>
             ) : (
-              <span>Slice: 45/128</span>
+              <span className="hidden md:inline">Slice: 45/128</span>
             )}
-            <span>Window: 400/40</span>
-            <span>Position: 0.0, 0.0 mm</span>
+            <span className="hidden md:inline">Window: 400/40</span>
+            <span className="hidden md:inline">Position: 0.0, 0.0 mm</span>
           </div>
-          <div className="flex items-center space-x-4">
-            <span>Annotations: {totalAnnotations}</span>
-            <span>AI Suggestions: {aiAnnotations.length}</span>
+          <div className="flex items-center space-x-2 md:space-x-4">
+            <span className="text-xs md:text-sm">Ann: {totalAnnotations}</span>
+            <span className="text-xs md:text-sm">AI: {aiAnnotations.length}</span>
+            {segmentationDots.length > 0 && (
+              <span className="text-xs md:text-sm text-teal-400">Seg: {segmentationDots.length}</span>
+            )}
             {aiConfidence > 0 && (
-              <span className="text-yellow-400">AI Confidence: {aiConfidence}%</span>
+              <span className="text-yellow-400 text-xs md:text-sm hidden md:inline">Conf: {aiConfidence}%</span>
             )}
           </div>
         </div>
