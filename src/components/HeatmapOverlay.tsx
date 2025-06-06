@@ -26,19 +26,20 @@ const HeatmapOverlay = ({ points, imageWidth, imageHeight, opacity = 0.4 }: Heat
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas size to match image
+    // Set canvas size to match image exactly
     canvas.width = imageWidth;
     canvas.height = imageHeight;
 
     // Clear canvas
     ctx.clearRect(0, 0, imageWidth, imageHeight);
 
-    // Create heatmap with proper blending
-    ctx.globalCompositeOperation = 'screen';
-    
+    // Save context state
+    ctx.save();
+
+    // Create heatmap with enhanced visibility
     points.forEach(point => {
       // Create radial gradient for each point
-      const radius = 40 * point.intensity;
+      const radius = Math.max(30, 50 * point.intensity);
       const gradient = ctx.createRadialGradient(
         point.x, point.y, 0,
         point.x, point.y, radius
@@ -50,11 +51,14 @@ const HeatmapOverlay = ({ points, imageWidth, imageHeight, opacity = 0.4 }: Heat
       const g = parseInt(color.slice(3, 5), 16);
       const b = parseInt(color.slice(5, 7), 16);
       
-      const maxAlpha = Math.min(point.intensity * 0.8, 0.6);
+      const maxAlpha = Math.min(point.intensity * 0.9, 0.8);
       gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${maxAlpha})`);
-      gradient.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, ${maxAlpha * 0.4})`);
+      gradient.addColorStop(0.3, `rgba(${r}, ${g}, ${b}, ${maxAlpha * 0.6})`);
+      gradient.addColorStop(0.7, `rgba(${r}, ${g}, ${b}, ${maxAlpha * 0.3})`);
       gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
 
+      // Set blend mode for better visibility
+      ctx.globalCompositeOperation = 'screen';
       ctx.fillStyle = gradient;
       ctx.beginPath();
       ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
@@ -63,6 +67,7 @@ const HeatmapOverlay = ({ points, imageWidth, imageHeight, opacity = 0.4 }: Heat
 
     // Apply overall opacity
     ctx.globalAlpha = opacity;
+    ctx.restore();
   }, [points, imageWidth, imageHeight, opacity]);
 
   if (points.length === 0 || imageWidth === 0 || imageHeight === 0) return null;
@@ -70,11 +75,12 @@ const HeatmapOverlay = ({ points, imageWidth, imageHeight, opacity = 0.4 }: Heat
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 pointer-events-none z-10"
+      className="absolute inset-0 pointer-events-none z-5"
       style={{ 
-        mixBlendMode: 'multiply',
+        mixBlendMode: 'screen',
         width: imageWidth,
-        height: imageHeight
+        height: imageHeight,
+        opacity: opacity
       }}
     />
   );
