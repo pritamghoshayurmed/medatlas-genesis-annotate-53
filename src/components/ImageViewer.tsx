@@ -142,7 +142,8 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
           }
         });
         
-        if (annotation.type === 'measurement') {
+        // Check if this is a measurement (rectangle type with measurement label)
+        if (annotation.type === 'rectangle' && annotation.label?.includes('Measurement:')) {
           ctx.stroke();
           // Draw measurement text
           const start = annotation.coordinates[0];

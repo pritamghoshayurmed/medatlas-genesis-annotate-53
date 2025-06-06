@@ -1,7 +1,9 @@
+
 import { useState } from 'react';
 import { Layers, Zap, Users, History, Download, Save, Undo, Redo, Upload, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
 import ImageViewer from './ImageViewer';
 import AnnotationTools from './AnnotationTools';
 import AIAssistPanel from './AIAssistPanel';

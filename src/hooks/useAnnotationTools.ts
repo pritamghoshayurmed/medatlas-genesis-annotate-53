@@ -43,9 +43,17 @@ export const useAnnotationTools = () => {
   const finishDrawing = useCallback((tool: string) => {
     if (!drawingState.isDrawing || drawingState.currentPath.length === 0) return;
 
+    // Map tool types to valid annotation types
+    let annotationType: 'polygon' | 'rectangle' | 'brush';
+    if (tool === 'spline') {
+      annotationType = 'polygon';
+    } else {
+      annotationType = 'brush';
+    }
+
     const newAnnotation: Annotation = {
       id: `manual_${Date.now()}`,
-      type: tool === 'spline' ? 'spline' : 'freehand',
+      type: annotationType,
       coordinates: drawingState.currentPath.map(p => [p.x, p.y]),
       label: 'Manual Annotation',
       confidence: 1.0,
@@ -64,11 +72,12 @@ export const useAnnotationTools = () => {
 
   const addMeasurement = useCallback((start: { x: number; y: number }, end: { x: number; y: number }) => {
     const distance = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+    // Map measurement to rectangle type with measurement data in label
     const measurementAnnotation: Annotation = {
       id: `measure_${Date.now()}`,
-      type: 'measurement',
+      type: 'rectangle',
       coordinates: [[start.x, start.y], [end.x, end.y]],
-      label: `${distance.toFixed(1)}px`,
+      label: `Measurement: ${distance.toFixed(1)}px`,
       confidence: 1.0,
       isAIGenerated: false,
       author: 'User',
