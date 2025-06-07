@@ -118,3 +118,53 @@ export const getAvailableModels = async () => {
     }
   ];
 };
+
+// Additional functions for aiService compatibility
+const runSegmentation = async (imageId: string, modelId: string) => {
+  console.log(`Running segmentation with model ${modelId} for image ${imageId}`);
+  
+  return {
+    jobId: `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    status: 'processing' as const,
+    progress: 0
+  };
+};
+
+const getJobStatus = async (jobId: string) => {
+  console.log(`Getting status for job ${jobId}`);
+  
+  // Simulate job completion
+  const annotations = await generateAIAnnotations('mock-image');
+  
+  return {
+    jobId,
+    status: 'completed' as const,
+    progress: 100,
+    results: annotations,
+    startTime: Date.now() - 3000,
+    modelType: 'brain_tumor_segmentation'
+  };
+};
+
+const calculateMetrics = async (groundTruth: Annotation[], predicted: Annotation[]) => {
+  console.log('Calculating metrics between ground truth and predicted annotations');
+  
+  // Mock metrics calculation
+  return {
+    dice: 0.85,
+    jaccard: 0.74,
+    hausdorff: 2.3,
+    sensitivity: 0.92,
+    specificity: 0.88
+  };
+};
+
+// Export the monaiBackend object that aiService expects
+export const monaiBackend = {
+  generateAIAnnotations,
+  predictWithMonai,
+  getAvailableModels,
+  runSegmentation,
+  getJobStatus,
+  calculateMetrics
+};
