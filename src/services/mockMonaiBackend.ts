@@ -1,290 +1,194 @@
 
-import { MedicalImage, Annotation } from '../types';
+import { Annotation } from '../types';
 
-// Mock MONAI Backend Service
-export class MockMonaiBackend {
-  private static instance: MockMonaiBackend;
-  private processingQueue: Map<string, any> = new Map();
+export interface AIModel {
+  id: string;
+  name: string;
+  description: string;
+  accuracy: number;
+  modality: string[];
+}
 
-  static getInstance(): MockMonaiBackend {
-    if (!MockMonaiBackend.instance) {
-      MockMonaiBackend.instance = new MockMonaiBackend();
+export interface SegmentationResult {
+  jobId: string;
+  status: 'processing' | 'completed' | 'failed';
+  progress: number;
+  results?: Annotation[];
+  startTime?: number;
+  modelType?: string;
+}
+
+class MockMonaiBackend {
+  private models: AIModel[] = [
+    {
+      id: 'brain_tumor_seg',
+      name: 'Brain Tumor Segmentation',
+      description: 'MONAI model for brain tumor detection and segmentation',
+      accuracy: 94.2,
+      modality: ['MRI', 'CT']
+    },
+    {
+      id: 'brain_anatomy_seg',
+      name: 'Brain Anatomy Segmentation',
+      description: 'Detailed brain structure segmentation',
+      accuracy: 89.7,
+      modality: ['MRI']
+    },
+    {
+      id: 'lesion_detection',
+      name: 'Lesion Detection',
+      description: 'Multi-class lesion detection and classification',
+      accuracy: 91.3,
+      modality: ['MRI', 'CT', 'FLAIR']
     }
-    return MockMonaiBackend.instance;
+  ];
+
+  private activeJobs: Map<string, SegmentationResult> = new Map();
+
+  async getAvailableModels(): Promise<AIModel[]> {
+    await this.delay(500);
+    console.log('Mock MONAI Backend: Returning available models');
+    return this.models;
   }
 
-  // Simulate MONAI's medical image loading and preprocessing
-  async loadMedicalImage(imageId: string): Promise<MedicalImage> {
-    console.log(`MONAI Backend: Loading medical image ${imageId}`);
-    
-    // Simulate network delay
-    await this.simulateDelay(800);
-    
-    const mockImage: MedicalImage = {
-      id: imageId,
-      name: `brain_scan_${imageId}.dcm`,
-      url: '/placeholder.svg',
-      annotations: [],
-      dimensions: { width: 1024, height: 1024 },
-      metadata: {
-        patientId: `PT_${Math.random().toString(36).substr(2, 9)}`,
-        studyDate: new Date().toISOString().split('T')[0],
-        modality: 'MRI'
-      }
-    };
-
-    console.log('MONAI Backend: Image loaded successfully', mockImage);
-    return mockImage;
-  }
-
-  // Simulate MONAI's AI segmentation models
-  async runSegmentation(imageId: string, modelType: string = 'brain_tumor'): Promise<{
-    jobId: string;
-    status: 'processing' | 'completed' | 'failed';
-    progress: number;
-  }> {
-    const jobId = `seg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    console.log(`MONAI Backend: Starting ${modelType} segmentation for image ${imageId}`);
-    console.log(`MONAI Backend: Job ID ${jobId} created`);
-
-    // Add to processing queue
-    this.processingQueue.set(jobId, {
-      imageId,
-      modelType,
-      status: 'processing',
-      progress: 0,
-      startTime: Date.now()
-    });
-
-    // Simulate progressive processing
-    this.simulateSegmentationProgress(jobId);
-
-    return {
-      jobId,
-      status: 'processing',
-      progress: 0
-    };
-  }
-
-  // Simulate progressive AI processing like MONAI's inference pipeline
-  private async simulateSegmentationProgress(jobId: string) {
-    const job = this.processingQueue.get(jobId);
-    if (!job) return;
-
-    const steps = [
-      { progress: 15, message: 'Preprocessing medical image...' },
-      { progress: 30, message: 'Loading segmentation model...' },
-      { progress: 50, message: 'Running inference...' },
-      { progress: 75, message: 'Post-processing results...' },
-      { progress: 90, message: 'Generating annotations...' },
-      { progress: 100, message: 'Segmentation completed' }
+  private generateRandomAnnotations(imageWidth: number = 400, imageHeight: number = 400): Annotation[] {
+    const annotations: Annotation[] = [];
+    const regions = [
+      { label: 'Glioblastoma', color: '#fbbf24', confidence: 0.89 },
+      { label: 'Peritumoral Edema', color: '#f59e0b', confidence: 0.76 },
+      { label: 'Brain Lesion', color: '#eab308', confidence: 0.82 },
+      { label: 'Abnormal Region', color: '#facc15', confidence: 0.71 },
+      { label: 'Highlighted Area', color: '#fde047', confidence: 0.93 }
     ];
 
-    for (const step of steps) {
-      await this.simulateDelay(500 + Math.random() * 1000);
-      job.progress = step.progress;
-      console.log(`MONAI Backend: ${step.message} (${step.progress}%)`);
+    // Generate 3-7 random annotations
+    const numAnnotations = Math.floor(Math.random() * 5) + 3;
+    
+    for (let i = 0; i < numAnnotations; i++) {
+      const region = regions[Math.floor(Math.random() * regions.length)];
       
-      if (step.progress === 100) {
-        job.status = 'completed';
-        job.results = this.generateMockSegmentationResults(job.modelType);
+      // Generate random blob-like shapes
+      const centerX = Math.random() * (imageWidth * 0.6) + (imageWidth * 0.2);
+      const centerY = Math.random() * (imageHeight * 0.6) + (imageHeight * 0.2);
+      const size = 20 + Math.random() * 80;
+      
+      const coordinates: number[][] = [];
+      const numPoints = 12 + Math.floor(Math.random() * 8);
+      
+      for (let j = 0; j < numPoints; j++) {
+        const angle = (j / numPoints) * 2 * Math.PI;
+        const radius = size * (0.7 + Math.random() * 0.6);
+        const irregularity = Math.random() * 0.3 + 0.85;
+        
+        const x = centerX + Math.cos(angle) * radius * irregularity;
+        const y = centerY + Math.sin(angle) * radius * irregularity;
+        
+        coordinates.push([
+          Math.max(0, Math.min(imageWidth, x)),
+          Math.max(0, Math.min(imageHeight, y))
+        ]);
       }
+
+      annotations.push({
+        id: `ai_seg_${Date.now()}_${i}`,
+        type: 'polygon',
+        coordinates,
+        label: region.label,
+        confidence: region.confidence,
+        isAIGenerated: true,
+        author: 'MONAI AI',
+        timestamp: new Date().toISOString(),
+        color: region.color
+      });
     }
+
+    return annotations;
   }
 
-  // Get job status (like MONAI's job monitoring)
-  async getJobStatus(jobId: string): Promise<any> {
-    const job = this.processingQueue.get(jobId);
+  async runSegmentation(imageId: string, modelId: string): Promise<SegmentationResult> {
+    const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    console.log(`Mock MONAI Backend: Starting segmentation job ${jobId}`);
+    
+    const job: SegmentationResult = {
+      jobId,
+      status: 'processing',
+      progress: 0,
+      startTime: Date.now(),
+      modelType: modelId
+    };
+
+    this.activeJobs.set(jobId, job);
+
+    // Simulate processing with progress updates
+    setTimeout(() => {
+      const updatedJob = this.activeJobs.get(jobId);
+      if (updatedJob) {
+        updatedJob.progress = 30;
+        updatedJob.status = 'processing';
+      }
+    }, 1000);
+
+    setTimeout(() => {
+      const updatedJob = this.activeJobs.get(jobId);
+      if (updatedJob) {
+        updatedJob.progress = 65;
+        updatedJob.status = 'processing';
+      }
+    }, 2500);
+
+    setTimeout(() => {
+      const updatedJob = this.activeJobs.get(jobId);
+      if (updatedJob) {
+        updatedJob.progress = 90;
+        updatedJob.status = 'processing';
+      }
+    }, 4000);
+
+    // Complete the job with random annotations
+    setTimeout(() => {
+      const updatedJob = this.activeJobs.get(jobId);
+      if (updatedJob) {
+        updatedJob.progress = 100;
+        updatedJob.status = 'completed';
+        updatedJob.results = this.generateRandomAnnotations();
+        console.log(`Mock MONAI Backend: Job ${jobId} completed with ${updatedJob.results.length} annotations`);
+      }
+    }, 5500);
+
+    return job;
+  }
+
+  async getJobStatus(jobId: string): Promise<SegmentationResult> {
+    await this.delay(200);
+    const job = this.activeJobs.get(jobId);
+    
     if (!job) {
       throw new Error(`Job ${jobId} not found`);
     }
 
+    return { ...job };
+  }
+
+  async calculateMetrics(groundTruth: Annotation[], predicted: Annotation[]) {
+    await this.delay(1000);
+    
+    const dice = 0.85 + Math.random() * 0.1;
+    const iou = 0.75 + Math.random() * 0.15;
+    const sensitivity = 0.80 + Math.random() * 0.15;
+    const specificity = 0.90 + Math.random() * 0.08;
+    
     return {
-      jobId,
-      status: job.status,
-      progress: job.progress,
-      results: job.results || null,
-      startTime: job.startTime,
-      modelType: job.modelType
+      dice: Math.round(dice * 100) / 100,
+      iou: Math.round(iou * 100) / 100,
+      sensitivity: Math.round(sensitivity * 100) / 100,
+      specificity: Math.round(specificity * 100) / 100
     };
   }
 
-  // Generate mock segmentation results that mimic MONAI's output format
-  private generateMockSegmentationResults(modelType: string): Annotation[] {
-    const baseAnnotations: Annotation[] = [];
-
-    switch (modelType) {
-      case 'brain_tumor':
-        baseAnnotations.push({
-          id: `ann_${Date.now()}_1`,
-          type: 'polygon',
-          coordinates: this.generateTumorCoordinates(),
-          label: 'Glioblastoma',
-          confidence: 0.89,
-          isAIGenerated: true,
-          author: 'MONAI-AI',
-          timestamp: new Date().toISOString()
-        });
-        baseAnnotations.push({
-          id: `ann_${Date.now()}_2`,
-          type: 'polygon',
-          coordinates: this.generateEdemmaCoordinates(),
-          label: 'Peritumoral Edema',
-          confidence: 0.72,
-          isAIGenerated: true,
-          author: 'MONAI-AI',
-          timestamp: new Date().toISOString()
-        });
-        break;
-      
-      case 'organ_segmentation':
-        ['Brain', 'Ventricles', 'Cerebellum'].forEach((organ, index) => {
-          baseAnnotations.push({
-            id: `ann_${Date.now()}_${index + 1}`,
-            type: 'polygon',
-            coordinates: this.generateOrganCoordinates(index),
-            label: organ,
-            confidence: 0.85 + Math.random() * 0.1,
-            isAIGenerated: true,
-            author: 'MONAI-AI',
-            timestamp: new Date().toISOString()
-          });
-        });
-        break;
-    }
-
-    return baseAnnotations;
-  }
-
-  // Generate realistic tumor coordinates
-  private generateTumorCoordinates(): number[][] {
-    const centerX = 200 + Math.random() * 200;
-    const centerY = 200 + Math.random() * 200;
-    const radius = 30 + Math.random() * 40;
-    
-    const coordinates: number[][] = [];
-    for (let i = 0; i < 20; i++) {
-      const angle = (i / 20) * 2 * Math.PI;
-      const variance = 0.8 + Math.random() * 0.4; // Make it irregular
-      coordinates.push([
-        centerX + Math.cos(angle) * radius * variance,
-        centerY + Math.sin(angle) * radius * variance
-      ]);
-    }
-    return coordinates;
-  }
-
-  // Generate edema coordinates around tumor
-  private generateEdemmaCoordinates(): number[][] {
-    const centerX = 220 + Math.random() * 160;
-    const centerY = 220 + Math.random() * 160;
-    const radius = 60 + Math.random() * 30;
-    
-    const coordinates: number[][] = [];
-    for (let i = 0; i < 25; i++) {
-      const angle = (i / 25) * 2 * Math.PI;
-      const variance = 0.7 + Math.random() * 0.6;
-      coordinates.push([
-        centerX + Math.cos(angle) * radius * variance,
-        centerY + Math.sin(angle) * radius * variance
-      ]);
-    }
-    return coordinates;
-  }
-
-  // Generate organ segmentation coordinates
-  private generateOrganCoordinates(organIndex: number): number[][] {
-    const centers = [
-      { x: 300, y: 300 }, // Brain
-      { x: 250, y: 350 }, // Ventricles
-      { x: 300, y: 450 }  // Cerebellum
-    ];
-    
-    const center = centers[organIndex];
-    const radius = [120, 40, 60][organIndex];
-    
-    const coordinates: number[][] = [];
-    for (let i = 0; i < 30; i++) {
-      const angle = (i / 30) * 2 * Math.PI;
-      coordinates.push([
-        center.x + Math.cos(angle) * radius,
-        center.y + Math.sin(angle) * radius
-      ]);
-    }
-    return coordinates;
-  }
-
-  // Simulate MONAI's model inference capabilities
-  async getAvailableModels(): Promise<Array<{
-    id: string;
-    name: string;
-    description: string;
-    accuracy: number;
-    modality: string[];
-  }>> {
-    await this.simulateDelay(300);
-    
-    return [
-      {
-        id: 'brain_tumor',
-        name: 'Brain Tumor Segmentation',
-        description: 'MONAI model for detecting and segmenting brain tumors in MRI scans',
-        accuracy: 0.89,
-        modality: ['MRI', 'CT']
-      },
-      {
-        id: 'organ_segmentation',
-        name: 'Multi-Organ Segmentation',
-        description: 'MONAI model for segmenting multiple organs and anatomical structures',
-        accuracy: 0.92,
-        modality: ['MRI', 'CT']
-      },
-      {
-        id: 'lesion_detection',
-        name: 'Lesion Detection',
-        description: 'MONAI model for detecting various types of lesions',
-        accuracy: 0.86,
-        modality: ['MRI', 'CT', 'PET']
-      }
-    ];
-  }
-
-  // Simulate image preprocessing like MONAI's transforms
-  async preprocessImage(imageId: string, transforms: string[]): Promise<{
-    processedImageId: string;
-    appliedTransforms: string[];
-  }> {
-    console.log(`MONAI Backend: Preprocessing image ${imageId} with transforms:`, transforms);
-    await this.simulateDelay(1000);
-    
-    return {
-      processedImageId: `processed_${imageId}`,
-      appliedTransforms: transforms
-    };
-  }
-
-  // Simulate MONAI's metrics calculation
-  async calculateMetrics(groundTruthAnnotations: Annotation[], predictedAnnotations: Annotation[]): Promise<{
-    diceScore: number;
-    hausdorffDistance: number;
-    sensitivity: number;
-    specificity: number;
-  }> {
-    await this.simulateDelay(500);
-    
-    return {
-      diceScore: 0.85 + Math.random() * 0.1,
-      hausdorffDistance: 2.3 + Math.random() * 1.5,
-      sensitivity: 0.88 + Math.random() * 0.08,
-      specificity: 0.91 + Math.random() * 0.06
-    };
-  }
-
-  private async simulateDelay(ms: number): Promise<void> {
+  private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
 
-// Export singleton instance
-export const monaiBackend = MockMonaiBackend.getInstance();
+export const monaiBackend = new MockMonaiBackend();

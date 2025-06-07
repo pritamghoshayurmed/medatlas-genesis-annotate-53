@@ -1,45 +1,72 @@
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  role: 'admin' | 'annotator' | 'reviewer';
+  isOnline?: boolean;
+}
+
 export interface Project {
   id: string;
   name: string;
   description: string;
   imageCount: number;
   annotationCount: number;
-  lastModified: string;
-  collaborators: string[];
+  createdAt: string;
+  updatedAt: string;
   status: 'active' | 'completed' | 'archived';
-  aiSuggestions: number;
+  collaborators: User[];
+  owner: User;
 }
 
 export interface Annotation {
   id: string;
-  type: 'polygon' | 'rectangle' | 'brush';
+  type: 'polygon' | 'rectangle' | 'brush' | 'point';
   coordinates: number[][];
-  label: string;
+  label?: string;
   confidence?: number;
   isAIGenerated: boolean;
   author: string;
   timestamp: string;
+  color?: string; // Added color property for annotations
 }
 
 export interface MedicalImage {
   id: string;
-  name: string;
+  filename: string;
   url: string;
-  annotations: Annotation[];
-  dimensions: { width: number; height: number };
   metadata: {
+    modality: string;
+    bodyPart: string;
+    studyDate: string;
     patientId?: string;
-    studyDate?: string;
-    modality?: string;
+    dimensions: {
+      width: number;
+      height: number;
+      depth?: number;
+    };
   };
+  annotations: Annotation[];
+  uploadedAt: string;
+  uploadedBy: User;
 }
 
-export interface User {
+export interface AnnotationLayer {
   id: string;
   name: string;
-  email: string;
-  role: 'admin' | 'researcher' | 'reviewer' | 'guest';
-  avatar?: string;
-  isOnline: boolean;
+  visible: boolean;
+  color: string;
+  opacity: number;
+  annotations: Annotation[];
+}
+
+export interface WorkspaceSettings {
+  gridVisible: boolean;
+  snapToGrid: boolean;
+  gridSize: number;
+  defaultTool: string;
+  autoSave: boolean;
+  shortcuts: Record<string, string>;
 }

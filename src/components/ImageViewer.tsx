@@ -136,7 +136,7 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
     }
   };
 
-  // Enhanced drawing effect with better visibility
+  // Enhanced drawing effect with prominent yellow annotations
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !imageLoaded) return;
@@ -148,15 +148,21 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
 
-    // Draw AI annotations with enhanced visibility
+    // Draw AI annotations with prominent yellow highlighting (like the reference image)
     aiAnnotations.forEach(annotation => {
       if (!annotation.coordinates || annotation.coordinates.length === 0) return;
       
-      ctx.strokeStyle = '#fbbf24';
-      ctx.lineWidth = isMobile ? 4 : 3;
-      ctx.setLineDash([8, 4]);
-      ctx.shadowColor = '#fbbf24';
-      ctx.shadowBlur = 6;
+      // Use bright yellow colors for AI annotations
+      const annotationColor = annotation.color || '#fbbf24';
+      ctx.strokeStyle = annotationColor;
+      ctx.lineWidth = isMobile ? 3 : 2;
+      ctx.setLineDash([]);
+      
+      // Add glow effect for prominence
+      ctx.shadowColor = annotationColor;
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
       
       ctx.beginPath();
       annotation.coordinates.forEach((point: number[], index: number) => {
@@ -172,23 +178,25 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
       }
       
       ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.shadowBlur = 0;
       
-      // Enhanced fill
-      ctx.fillStyle = 'rgba(251, 191, 36, 0.2)';
+      // Prominent fill with yellow/orange colors
+      ctx.fillStyle = `${annotationColor}88`; // Semi-transparent fill
       ctx.fill();
       
-      // Draw label with better visibility
+      // Reset shadow
+      ctx.shadowBlur = 0;
+      
+      // Draw label with enhanced visibility
       if (annotation.coordinates[0]) {
-        ctx.fillStyle = '#fbbf24';
-        ctx.font = `bold ${isMobile ? '14px' : '12px'} sans-serif`;
+        ctx.fillStyle = annotationColor;
+        ctx.font = `bold ${isMobile ? '14px' : '12px'} Arial`;
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 3;
         const labelText = `${annotation.label} (${Math.round((annotation.confidence || 0) * 100)}%)`;
         const labelX = annotation.coordinates[0][0];
-        const labelY = annotation.coordinates[0][1] - 5;
+        const labelY = annotation.coordinates[0][1] - 8;
         
+        // Text outline for better readability
         ctx.strokeText(labelText, labelX, labelY);
         ctx.fillText(labelText, labelX, labelY);
       }
@@ -225,7 +233,7 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
         const midY = (start[1] + end[1]) / 2;
         
         ctx.fillStyle = '#10b981';
-        ctx.font = `bold ${isMobile ? '16px' : '14px'} sans-serif`;
+        ctx.font = `bold ${isMobile ? '16px' : '14px'} Arial`;
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 2;
         ctx.strokeText(annotation.label || '', midX, midY - 8);
