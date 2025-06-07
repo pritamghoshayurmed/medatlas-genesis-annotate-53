@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   name: string;
@@ -16,9 +15,11 @@ export interface Project {
   annotationCount: number;
   createdAt: string;
   updatedAt: string;
+  lastModified: string; // Added missing property
   status: 'active' | 'completed' | 'archived';
   collaborators: User[];
   owner: User;
+  aiSuggestions: number; // Added missing property
 }
 
 export interface Annotation {

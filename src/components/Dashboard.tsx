@@ -24,8 +24,15 @@ const Dashboard = ({ onProjectSelect }: DashboardProps) => {
       description: 'MRI scans for glioblastoma detection and segmentation using AI-assisted annotation',
       imageCount: 245,
       annotationCount: 1847,
+      createdAt: '2024-01-10',
+      updatedAt: '2024-01-15',
       lastModified: '2024-01-15',
-      collaborators: ['Dr. Smith', 'Dr. Chen', 'Dr. Rodriguez'],
+      collaborators: [
+        { id: '1', name: 'Dr. Smith', email: 'smith@example.com', role: 'admin' as const },
+        { id: '2', name: 'Dr. Chen', email: 'chen@example.com', role: 'annotator' as const },
+        { id: '3', name: 'Dr. Rodriguez', email: 'rodriguez@example.com', role: 'reviewer' as const }
+      ],
+      owner: { id: '1', name: 'Dr. Smith', email: 'smith@example.com', role: 'admin' as const },
       status: 'active',
       aiSuggestions: 156
     },
@@ -35,8 +42,14 @@ const Dashboard = ({ onProjectSelect }: DashboardProps) => {
       description: 'CT chest scans for early-stage lung cancer detection with collaborative annotation',
       imageCount: 189,
       annotationCount: 2341,
+      createdAt: '2024-01-08',
+      updatedAt: '2024-01-14',
       lastModified: '2024-01-14',
-      collaborators: ['Dr. Wilson', 'Dr. Kumar'],
+      collaborators: [
+        { id: '4', name: 'Dr. Wilson', email: 'wilson@example.com', role: 'admin' as const },
+        { id: '5', name: 'Dr. Kumar', email: 'kumar@example.com', role: 'annotator' as const }
+      ],
+      owner: { id: '4', name: 'Dr. Wilson', email: 'wilson@example.com', role: 'admin' as const },
       status: 'active',
       aiSuggestions: 203
     },
@@ -46,8 +59,16 @@ const Dashboard = ({ onProjectSelect }: DashboardProps) => {
       description: 'Echocardiogram analysis for cardiac function assessment',
       imageCount: 156,
       annotationCount: 892,
+      createdAt: '2024-01-05',
+      updatedAt: '2024-01-12',
       lastModified: '2024-01-12',
-      collaborators: ['Dr. Johnson', 'Dr. Lee', 'Dr. Brown', 'Dr. Davis'],
+      collaborators: [
+        { id: '6', name: 'Dr. Johnson', email: 'johnson@example.com', role: 'admin' as const },
+        { id: '7', name: 'Dr. Lee', email: 'lee@example.com', role: 'annotator' as const },
+        { id: '8', name: 'Dr. Brown', email: 'brown@example.com', role: 'reviewer' as const },
+        { id: '9', name: 'Dr. Davis', email: 'davis@example.com', role: 'annotator' as const }
+      ],
+      owner: { id: '6', name: 'Dr. Johnson', email: 'johnson@example.com', role: 'admin' as const },
       status: 'completed',
       aiSuggestions: 78
     }
