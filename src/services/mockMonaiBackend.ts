@@ -99,21 +99,24 @@ export const getAvailableModels = async () => {
       id: 'brain_tumor_segmentation',
       name: 'Brain Tumor Segmentation',
       description: 'Segments glioblastoma and peritumoral edema in brain MRI',
-      modality: 'MRI',
+      accuracy: 94,
+      modality: ['MRI'],
       bodyPart: 'Brain'
     },
     {
       id: 'lung_nodule_detection',
       name: 'Lung Nodule Detection',
       description: 'Detects and classifies lung nodules in CT scans',
-      modality: 'CT',
+      accuracy: 87,
+      modality: ['CT'],
       bodyPart: 'Chest'
     },
     {
       id: 'cardiac_segmentation',
       name: 'Cardiac Segmentation',
       description: 'Segments cardiac chambers and structures',
-      modality: 'Echo',
+      accuracy: 91,
+      modality: ['Echo'],
       bodyPart: 'Heart'
     }
   ];
