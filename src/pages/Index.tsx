@@ -6,14 +6,28 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import AnnotationWorkspace from '../components/AnnotationWorkspace';
 import ImageUpload from '../components/ImageUpload';
-import { Project } from '../types';
+import ImageViewer from '../components/ImageViewer';
+import AnnotationTools from '../components/AnnotationTools';
+import AIAssistPanel from '../components/AIAssistPanel';
+import LayersPanel from '../components/LayersPanel';
+import CollaborationPanel from '../components/CollaborationPanel';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Project, Annotation } from '../types';
+import { useAnnotationTools } from '../hooks/useAnnotationTools';
 
 const Index = () => {
   const [activeView, setActiveView] = useState<'home' | 'annotation'>('home');
-  const [activeTab, setActiveTab] = useState<'analyze' | 'history'>('analyze');
+  const [activeTab, setActiveTab] = useState<'analyze' | 'annotate'>('analyze');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [uploadedImage, setUploadedImage] = useState<string>('');
+  const [uploadedImageName, setUploadedImageName] = useState<string>('');
   const [analysisOptions, setAnalysisOptions] = useState(false);
+  const [selectedTool, setSelectedTool] = useState<string>('select');
+  const [aiAnnotations, setAiAnnotations] = useState<Annotation[]>([]);
+  const [sidebarTab, setSidebarTab] = useState('ai');
+
+  // Get annotations from the hook
+  const { annotations } = useAnnotationTools();
 
   const handleStartAnalysis = () => {
     // Create a mock project for the annotation workspace
@@ -61,6 +75,7 @@ const Index = () => {
 
   const handleImageUpload = (imageUrl: string, fileName: string) => {
     setUploadedImage(imageUrl);
+    setUploadedImageName(fileName);
     console.log('Image uploaded:', fileName);
   };
 
@@ -69,7 +84,14 @@ const Index = () => {
       URL.revokeObjectURL(uploadedImage);
     }
     setUploadedImage('');
+    setUploadedImageName('');
+    setAiAnnotations([]);
     console.log('Image cleared');
+  };
+
+  const handleAIAnnotationsGenerated = (newAnnotations: Annotation[]) => {
+    console.log('New AI annotations received:', newAnnotations);
+    setAiAnnotations(prev => [...prev, ...newAnnotations]);
   };
 
   const scanTypes = [
@@ -175,14 +197,14 @@ const Index = () => {
             Analyze
           </button>
           <button
-            onClick={() => setActiveTab('history')}
+            onClick={() => setActiveTab('annotate')}
             className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'history'
+              activeTab === 'annotate'
                 ? 'text-blue-600 border-blue-600 bg-white'
                 : 'text-gray-500 border-transparent bg-gray-50'
             }`}
           >
-            History
+            Annotate
           </button>
         </div>
       </div>
@@ -274,13 +296,95 @@ const Index = () => {
           </>
         )}
 
-        {activeTab === 'history' && (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-              <FileText className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Analysis History</h3>
-            <p className="text-gray-500 text-sm">Your previous analyses will appear here</p>
+        {activeTab === 'annotate' && (
+          <div className="bg-slate-950 rounded-lg min-h-[600px] relative">
+            {uploadedImage ? (
+              <div className="flex h-[600px]">
+                {/* Left sidebar - tools */}
+                <div className="w-16 bg-slate-900/90 backdrop-blur-lg border-r border-slate-700/50 flex flex-col items-center py-4 space-y-2 rounded-l-lg">
+                  <AnnotationTools 
+                    selectedTool={selectedTool} 
+                    onToolSelect={setSelectedTool} 
+                  />
+                </div>
+
+                {/* Main workspace */}
+                <div className="flex-1 flex flex-col min-w-0">
+                  {/* Header */}
+                  <div className="bg-slate-800/90 border-b border-slate-700/50 px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center space-x-4 min-w-0">
+                      <h3 className="text-white font-semibold text-base truncate">{uploadedImageName || 'medical_image.jpg'}</h3>
+                      <div className="hidden lg:flex items-center space-x-2 text-sm text-slate-400">
+                        <span>Custom Upload</span>
+                        <span>•</span>
+                        <span className="text-green-400">Image Loaded</span>
+                        <span>•</span>
+                        <span className="text-yellow-400">Ready for Annotation</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Image viewer */}
+                  <div className="flex-1 min-h-0">
+                    <ImageViewer 
+                      selectedTool={selectedTool} 
+                      aiAnnotations={aiAnnotations}
+                      uploadedImage={uploadedImage}
+                      uploadedImageName={uploadedImageName}
+                    />
+                  </div>
+                </div>
+
+                {/* Right sidebar */}
+                <div className="w-80 bg-slate-900/90 backdrop-blur-lg border-l border-slate-700/50 rounded-r-lg">
+                  <Tabs value={sidebarTab} onValueChange={setSidebarTab} className="h-full flex flex-col">
+                    <div className="p-2">
+                      <TabsList className="grid w-full grid-cols-3 bg-slate-800/50 h-16">
+                        <TabsTrigger value="ai" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-teal-600">
+                          <Brain className="w-3 h-3" />
+                          <span className="text-xs">AI</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="layers" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-teal-600">
+                          <FileText className="w-3 h-3" />
+                          <span className="text-xs">Layers</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="team" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-teal-600">
+                          <Users className="w-3 h-3" />
+                          <span className="text-xs">Team</span>
+                        </TabsTrigger>
+                      </TabsList>
+                    </div>
+                    
+                    <div className="flex-1 overflow-hidden">
+                      <TabsContent value="ai" className="h-full m-0">
+                        <div className="p-4 h-full overflow-y-auto">
+                          <AIAssistPanel onAnnotationsGenerated={handleAIAnnotationsGenerated} />
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="layers" className="h-full m-0">
+                        <LayersPanel 
+                          annotations={annotations}
+                          aiAnnotations={aiAnnotations}
+                        />
+                      </TabsContent>
+                      <TabsContent value="team" className="h-full m-0">
+                        <CollaborationPanel />
+                      </TabsContent>
+                    </div>
+                  </Tabs>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-[600px] text-center">
+                <div className="text-slate-400 p-8">
+                  <div className="bg-slate-800 rounded-lg p-8 border-2 border-dashed border-slate-600">
+                    <Upload className="w-16 h-16 mx-auto mb-4 text-slate-500" />
+                    <p className="text-lg mb-2">No image uploaded</p>
+                    <p className="text-sm">Upload an image in the "Analyze" tab to start annotating</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
