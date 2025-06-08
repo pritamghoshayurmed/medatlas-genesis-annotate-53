@@ -26,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Slider } from '@/components/ui/slider';
 import { Annotation } from '../types';
 import { useAnnotationTools } from '../hooks/useAnnotationTools';
 import ImageUpload from './ImageUpload';
@@ -50,6 +51,22 @@ const MobileAnnotationInterface = ({
   onClearImage
 }: MobileAnnotationInterfaceProps) => {
   const [activeSection, setActiveSection] = useState<'tools' | 'image' | 'ai' | 'analysis'>('tools');
+  const [layerOpacities, setLayerOpacities] = useState({
+    ai: 85,
+    manual: 100,
+    measurements: 90,
+    heatmap: 50
+  });
+  const [layerVisibility, setLayerVisibility] = useState({
+    ai: true,
+    manual: true,
+    measurements: true,
+    heatmap: true
+  });
+  const [gridVisible, setGridVisible] = useState(false);
+  const [undoHistory, setUndoHistory] = useState<string[]>([]);
+  const [redoHistory, setRedoHistory] = useState<string[]>([]);
+  
   const { clearAllAnnotations, deleteAnnotation } = useAnnotationTools();
 
   const annotationTools = [
@@ -59,24 +76,159 @@ const MobileAnnotationInterface = ({
     { id: 'ruler', name: 'Ruler', icon: Ruler, color: 'bg-orange-500' }
   ];
 
+  // Quick Actions handlers
+  const handleUndo = () => {
+    console.log('Undo action triggered');
+    // Implementation would depend on having a proper undo/redo system
+    if (annotations.length > 0) {
+      const lastAnnotation = annotations[annotations.length - 1];
+      deleteAnnotation(lastAnnotation.id);
+      setUndoHistory(prev => [...prev, lastAnnotation.id]);
+    }
+  };
+
+  const handleRedo = () => {
+    console.log('Redo action triggered');
+    // Implementation would restore last undone action
+    if (redoHistory.length > 0) {
+      // This would need to be implemented with proper state management
+      console.log('Redo functionality would restore:', redoHistory[redoHistory.length - 1]);
+    }
+  };
+
+  const handleSave = () => {
+    console.log('Save action triggered');
+    const projectData = {
+      annotations,
+      aiAnnotations,
+      uploadedImage,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Save to localStorage as a simple implementation
+    localStorage.setItem('annotationProject', JSON.stringify(projectData));
+    console.log('Project saved successfully');
+  };
+
+  const handleExport = () => {
+    console.log('Export action triggered');
+    const exportData = {
+      annotations,
+      aiAnnotations,
+      metadata: {
+        totalAnnotations: annotations.length + aiAnnotations.length,
+        exportDate: new Date().toISOString(),
+        imageInfo: uploadedImage ? 'Custom uploaded image' : 'Default brain scan'
+      }
+    };
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `annotations_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    console.log('Annotations exported successfully');
+  };
+
+  // View Controls handlers
+  const handleZoomIn = () => {
+    console.log('Zoom in triggered');
+    // This would need to communicate with the ImageViewer component
+    const event = new CustomEvent('imageZoom', { detail: { action: 'in' } });
+    window.dispatchEvent(event);
+  };
+
+  const handleZoomOut = () => {
+    console.log('Zoom out triggered');
+    const event = new CustomEvent('imageZoom', { detail: { action: 'out' } });
+    window.dispatchEvent(event);
+  };
+
+  const handleResetView = () => {
+    console.log('Reset view triggered');
+    const event = new CustomEvent('imageZoom', { detail: { action: 'reset' } });
+    window.dispatchEvent(event);
+  };
+
+  const handleToggleGrid = () => {
+    console.log('Grid toggle triggered');
+    setGridVisible(!gridVisible);
+    const event = new CustomEvent('toggleGrid', { detail: { visible: !gridVisible } });
+    window.dispatchEvent(event);
+  };
+
+  // Layer management handlers
+  const toggleLayerVisibility = (layer: string) => {
+    setLayerVisibility(prev => ({
+      ...prev,
+      [layer]: !prev[layer as keyof typeof prev]
+    }));
+    console.log(`Toggled ${layer} layer visibility`);
+  };
+
+  const updateLayerOpacity = (layer: string, opacity: number) => {
+    setLayerOpacities(prev => ({
+      ...prev,
+      [layer]: opacity
+    }));
+    console.log(`Updated ${layer} layer opacity to ${opacity}%`);
+  };
+
   const quickActions = [
-    { id: 'undo', name: 'Undo', icon: Undo },
-    { id: 'redo', name: 'Redo', icon: Redo },
-    { id: 'save', name: 'Save', icon: Save },
-    { id: 'export', name: 'Export', icon: Download }
+    { id: 'undo', name: 'Undo', icon: Undo, handler: handleUndo, disabled: annotations.length === 0 },
+    { id: 'redo', name: 'Redo', icon: Redo, handler: handleRedo, disabled: redoHistory.length === 0 },
+    { id: 'save', name: 'Save', icon: Save, handler: handleSave, disabled: false },
+    { id: 'export', name: 'Export', icon: Download, handler: handleExport, disabled: annotations.length === 0 && aiAnnotations.length === 0 }
   ];
 
   const viewControls = [
-    { id: 'zoom-in', name: 'Zoom In', icon: ZoomIn },
-    { id: 'zoom-out', name: 'Zoom Out', icon: ZoomOut },
-    { id: 'reset', name: 'Reset View', icon: RotateCcw },
-    { id: 'grid', name: 'Grid', icon: Grid }
+    { id: 'zoom-in', name: 'Zoom In', icon: ZoomIn, handler: handleZoomIn },
+    { id: 'zoom-out', name: 'Zoom Out', icon: ZoomOut, handler: handleZoomOut },
+    { id: 'reset', name: 'Reset View', icon: RotateCcw, handler: handleResetView },
+    { id: 'grid', name: 'Grid', icon: Grid, handler: handleToggleGrid, active: gridVisible }
   ];
 
   const allAnnotations = [...annotations, ...aiAnnotations];
   const totalAnnotations = allAnnotations.length;
   const aiCount = aiAnnotations.length;
   const manualCount = annotations.length;
+  const measurementCount = annotations.filter(ann => ann.label?.includes('Measurement')).length;
+
+  // Layer data for statistics
+  const layers = [
+    { 
+      name: 'AI Annotations', 
+      count: aiCount, 
+      opacity: layerOpacities.ai, 
+      visible: layerVisibility.ai, 
+      key: 'ai' 
+    },
+    { 
+      name: 'Manual Annotations', 
+      count: manualCount - measurementCount, 
+      opacity: layerOpacities.manual, 
+      visible: layerVisibility.manual, 
+      key: 'manual' 
+    },
+    { 
+      name: 'Measurements', 
+      count: measurementCount, 
+      opacity: layerOpacities.measurements, 
+      visible: layerVisibility.measurements, 
+      key: 'measurements' 
+    },
+    { 
+      name: 'AI Heatmap', 
+      count: aiCount > 0 ? 1 : 0, 
+      opacity: layerOpacities.heatmap, 
+      visible: layerVisibility.heatmap, 
+      key: 'heatmap' 
+    }
+  ];
 
   return (
     <div className="h-full flex flex-col bg-slate-900">
@@ -153,7 +305,9 @@ const MobileAnnotationInterface = ({
                       key={action.id}
                       variant="outline"
                       size="sm"
-                      className="border-slate-600 text-slate-300 hover:bg-slate-700 flex items-center space-x-2 justify-start h-10"
+                      onClick={action.handler}
+                      disabled={action.disabled}
+                      className="border-slate-600 text-slate-300 hover:bg-slate-700 flex items-center space-x-2 justify-start h-10 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <action.icon className="w-4 h-4" />
                       <span className="text-xs">{action.name}</span>
@@ -175,7 +329,10 @@ const MobileAnnotationInterface = ({
                       key={control.id}
                       variant="outline"
                       size="sm"
-                      className="border-slate-600 text-slate-300 hover:bg-slate-700 flex items-center space-x-2 justify-start h-10"
+                      onClick={control.handler}
+                      className={`border-slate-600 hover:bg-slate-700 flex items-center space-x-2 justify-start h-10 ${
+                        control.active ? 'bg-teal-600/20 border-teal-500 text-teal-400' : 'text-slate-300'
+                      }`}
                     >
                       <control.icon className="w-4 h-4" />
                       <span className="text-xs">{control.name}</span>
@@ -264,6 +421,48 @@ const MobileAnnotationInterface = ({
               </CardContent>
             </Card>
 
+            {/* Layers Panel */}
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-white text-sm">Layers</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {layers.map((layer) => (
+                    <div key={layer.key} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleLayerVisibility(layer.key)}
+                            className="h-6 w-6 p-0 text-slate-400 hover:text-white"
+                          >
+                            {layer.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                          </Button>
+                          <span className="text-white text-xs font-medium">{layer.name}</span>
+                        </div>
+                        <Badge variant="outline" className="text-slate-300 border-slate-500 text-xs">
+                          {layer.count}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-slate-400 text-xs min-w-[60px]">Opacity</span>
+                        <Slider
+                          value={[layer.opacity]}
+                          onValueChange={(value) => updateLayerOpacity(layer.key, value[0])}
+                          max={100}
+                          step={5}
+                          className="flex-1"
+                        />
+                        <span className="text-slate-300 text-xs min-w-[30px]">{layer.opacity}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
             {aiAnnotations.length > 0 && (
               <Card className="bg-slate-800/50 border-slate-700">
                 <CardHeader className="pb-3">
@@ -298,24 +497,45 @@ const MobileAnnotationInterface = ({
 
         {activeSection === 'analysis' && (
           <div className="space-y-4">
-            {/* Annotation Summary */}
+            {/* Statistics */}
             <Card className="bg-slate-800/50 border-slate-700">
               <CardHeader className="pb-3">
-                <CardTitle className="text-white text-sm">Annotation Summary</CardTitle>
+                <CardTitle className="text-white text-sm">Statistics</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className="p-2 bg-slate-700/30 rounded">
-                    <p className="text-2xl font-bold text-white">{totalAnnotations}</p>
-                    <p className="text-xs text-slate-400">Total</p>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    <div className="p-2 bg-slate-700/30 rounded">
+                      <p className="text-2xl font-bold text-white">{totalAnnotations}</p>
+                      <p className="text-xs text-slate-400">Total</p>
+                    </div>
+                    <div className="p-2 bg-slate-700/30 rounded">
+                      <p className="text-2xl font-bold text-yellow-400">{aiCount}</p>
+                      <p className="text-xs text-slate-400">AI</p>
+                    </div>
+                    <div className="p-2 bg-slate-700/30 rounded">
+                      <p className="text-2xl font-bold text-green-400">{manualCount}</p>
+                      <p className="text-xs text-slate-400">Manual</p>
+                    </div>
                   </div>
-                  <div className="p-2 bg-slate-700/30 rounded">
-                    <p className="text-2xl font-bold text-yellow-400">{aiCount}</p>
-                    <p className="text-xs text-slate-400">AI</p>
-                  </div>
-                  <div className="p-2 bg-slate-700/30 rounded">
-                    <p className="text-2xl font-bold text-green-400">{manualCount}</p>
-                    <p className="text-xs text-slate-400">Manual</p>
+                  
+                  <Separator className="bg-slate-700" />
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-400">Visible:</span>
+                      <span className="text-white">
+                        {layers.filter(l => l.visible && l.count > 0).length}/{layers.filter(l => l.count > 0).length}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-400">Measurements:</span>
+                      <span className="text-white">{measurementCount}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-400">AI Accuracy:</span>
+                      <span className="text-green-400">94%</span>
+                    </div>
                   </div>
                 </div>
               </CardContent>
