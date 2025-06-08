@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { ZoomIn, ZoomOut, RotateCcw, Eye, Grid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,13 +12,34 @@ interface ImageViewerProps {
   aiAnnotations?: Annotation[];
   uploadedImage?: string;
   uploadedImageName?: string;
+  zoom?: number;
+  showHeatmap?: boolean;
+  gridVisible?: boolean;
+  onZoomChange?: (zoom: number) => void;
+  hideControls?: boolean;
 }
 
-const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploadedImageName }: ImageViewerProps) => {
-  const [zoom, setZoom] = useState(100);
-  const [showHeatmap, setShowHeatmap] = useState(true);
+const ImageViewer = ({ 
+  selectedTool, 
+  aiAnnotations = [], 
+  uploadedImage, 
+  uploadedImageName,
+  zoom: externalZoom,
+  showHeatmap: externalShowHeatmap,
+  gridVisible: externalGridVisible,
+  onZoomChange,
+  hideControls = false
+}: ImageViewerProps) => {
+  const [internalZoom, setInternalZoom] = useState(100);
+  const [internalShowHeatmap, setInternalShowHeatmap] = useState(true);
+  const [internalGridVisible, setInternalGridVisible] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
+  
+  // Use external state if provided, otherwise use internal state
+  const zoom = externalZoom !== undefined ? externalZoom : internalZoom;
+  const showHeatmap = externalShowHeatmap !== undefined ? externalShowHeatmap : internalShowHeatmap;
+  const gridVisible = externalGridVisible !== undefined ? externalGridVisible : internalGridVisible;
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -46,12 +66,47 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
     aiAnnotationsCount: aiAnnotations.length,
     imageLoaded,
     imageDimensions,
-    drawingState
+    drawingState,
+    hideControls
   });
 
-  const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 400));
-  const handleZoomOut = () => setZoom(prev => Math.max(prev - 25, 25));
-  const handleResetZoom = () => setZoom(100);
+  const handleZoomIn = () => {
+    const newZoom = Math.min(zoom + 25, 400);
+    if (onZoomChange) {
+      onZoomChange(newZoom);
+    } else {
+      setInternalZoom(newZoom);
+    }
+  };
+
+  const handleZoomOut = () => {
+    const newZoom = Math.max(zoom - 25, 25);
+    if (onZoomChange) {
+      onZoomChange(newZoom);
+    } else {
+      setInternalZoom(newZoom);
+    }
+  };
+
+  const handleResetZoom = () => {
+    if (onZoomChange) {
+      onZoomChange(100);
+    } else {
+      setInternalZoom(100);
+    }
+  };
+
+  const handleToggleHeatmap = () => {
+    if (externalShowHeatmap === undefined) {
+      setInternalShowHeatmap(!internalShowHeatmap);
+    }
+  };
+
+  const handleToggleGrid = () => {
+    if (externalGridVisible === undefined) {
+      setInternalGridVisible(!internalGridVisible);
+    }
+  };
 
   const handleImageLoad = () => {
     console.log('Image loading...');
@@ -310,28 +365,30 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
 
   return (
     <div className="relative h-full flex flex-col bg-slate-950">
-      {/* Controls */}
-      <div className="absolute top-1 md:top-2 left-1 md:left-2 z-20 flex items-center space-x-1 bg-slate-900/95 backdrop-blur-lg rounded-lg p-1 border border-slate-700/50">
-        <Button variant="ghost" size="sm" onClick={handleZoomOut} className="text-slate-300 hover:text-white h-6 w-6 md:h-8 md:w-8 p-0">
-          <ZoomOut className="w-3 h-3 md:w-4 md:h-4" />
-        </Button>
-        <span className="text-white text-xs min-w-[35px] md:min-w-[45px] text-center">{zoom}%</span>
-        <Button variant="ghost" size="sm" onClick={handleZoomIn} className="text-slate-300 hover:text-white h-6 w-6 md:h-8 md:w-8 p-0">
-          <ZoomIn className="w-3 h-3 md:w-4 md:h-4" />
-        </Button>
-        <div className="w-px h-3 md:h-4 bg-slate-600 mx-0.5 md:mx-1" />
-        <Button variant="ghost" size="sm" onClick={handleResetZoom} className="text-slate-300 hover:text-white h-6 w-6 md:h-8 md:w-8 p-0">
-          <RotateCcw className="w-3 h-3 md:w-4 md:h-4" />
-        </Button>
-        <Button
-          variant={showHeatmap ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setShowHeatmap(!showHeatmap)}
-          className="text-slate-300 hover:text-white h-6 w-6 md:h-8 md:w-8 p-0"
-        >
-          <Eye className="w-3 h-3 md:w-4 md:h-4" />
-        </Button>
-      </div>
+      {/* Controls - only show if not hidden */}
+      {!hideControls && (
+        <div className="absolute top-1 md:top-2 left-1 md:left-2 z-20 flex items-center space-x-1 bg-slate-900/95 backdrop-blur-lg rounded-lg p-1 border border-slate-700/50">
+          <Button variant="ghost" size="sm" onClick={handleZoomOut} className="text-slate-300 hover:text-white h-6 w-6 md:h-8 md:w-8 p-0">
+            <ZoomOut className="w-3 h-3 md:w-4 md:h-4" />
+          </Button>
+          <span className="text-white text-xs min-w-[35px] md:min-w-[45px] text-center">{zoom}%</span>
+          <Button variant="ghost" size="sm" onClick={handleZoomIn} className="text-slate-300 hover:text-white h-6 w-6 md:h-8 md:w-8 p-0">
+            <ZoomIn className="w-3 h-3 md:w-4 md:h-4" />
+          </Button>
+          <div className="w-px h-3 md:h-4 bg-slate-600 mx-0.5 md:mx-1" />
+          <Button variant="ghost" size="sm" onClick={handleResetZoom} className="text-slate-300 hover:text-white h-6 w-6 md:h-8 md:w-8 p-0">
+            <RotateCcw className="w-3 h-3 md:w-4 md:h-4" />
+          </Button>
+          <Button
+            variant={showHeatmap ? "default" : "ghost"}
+            size="sm"
+            onClick={handleToggleHeatmap}
+            className="text-slate-300 hover:text-white h-6 w-6 md:h-8 md:w-8 p-0"
+          >
+            <Eye className="w-3 h-3 md:w-4 md:h-4" />
+          </Button>
+        </div>
+      )}
 
       {/* Tool info */}
       <div className="absolute top-1 md:top-2 right-1 md:right-2 z-20 bg-slate-900/95 backdrop-blur-lg rounded-lg p-1 md:p-2 border border-slate-700/50">
@@ -358,8 +415,8 @@ const ImageViewer = ({ selectedTool, aiAnnotations = [], uploadedImage, uploaded
               alt={uploadedImageName || "Medical image"}
               className="max-w-none bg-slate-800 rounded-lg shadow-2xl"
               style={{ 
-                maxWidth: isMobile ? '280px' : '700px', 
-                maxHeight: isMobile ? '280px' : '500px',
+                maxWidth: isMobile ? '320px' : '700px', 
+                maxHeight: isMobile ? '320px' : '500px',
                 width: 'auto',
                 height: 'auto'
               }}

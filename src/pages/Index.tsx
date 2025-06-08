@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { ArrowLeft, Users, Settings, Upload, FileText, Brain, Scan, Stethoscope, Home, Calendar, MessageCircle, User } from 'lucide-react';
+import { ArrowLeft, Users, Settings, Upload, FileText, Brain, Scan, Stethoscope, Home, Calendar, MessageCircle, User, ZoomIn, ZoomOut, RotateCcw, Eye, Grid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -25,6 +24,9 @@ const Index = () => {
   const [selectedTool, setSelectedTool] = useState<string>('select');
   const [aiAnnotations, setAiAnnotations] = useState<Annotation[]>([]);
   const [sidebarTab, setSidebarTab] = useState('ai');
+  const [zoom, setZoom] = useState(100);
+  const [showHeatmap, setShowHeatmap] = useState(true);
+  const [gridVisible, setGridVisible] = useState(false);
 
   // Get annotations from the hook
   const { annotations } = useAnnotationTools();
@@ -94,6 +96,13 @@ const Index = () => {
     setAiAnnotations(prev => [...prev, ...newAnnotations]);
   };
 
+  // Zoom and view control handlers
+  const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 400));
+  const handleZoomOut = () => setZoom(prev => Math.max(prev - 25, 25));
+  const handleResetZoom = () => setZoom(100);
+  const handleToggleHeatmap = () => setShowHeatmap(!showHeatmap);
+  const handleToggleGrid = () => setGridVisible(!gridVisible);
+
   const scanTypes = [
     {
       id: 'xray',
@@ -128,7 +137,7 @@ const Index = () => {
   if (activeView === 'annotation') {
     return (
       <div className="min-h-screen bg-slate-950">
-        {/* Header for annotation workspace */}
+        {/* Enhanced header for annotation workspace with mobile controls */}
         <div className="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Button
@@ -141,7 +150,58 @@ const Index = () => {
             </Button>
             <h1 className="text-lg font-semibold">Diagnosis Engine</h1>
           </div>
-          <div className="flex items-center space-x-2">
+          
+          {/* Mobile-friendly controls */}
+          <div className="flex items-center space-x-1">
+            {/* Zoom controls */}
+            <div className="flex items-center space-x-1 bg-blue-700/50 rounded px-2 py-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleZoomOut}
+                className="text-white hover:bg-blue-800 h-6 w-6 p-0"
+              >
+                <ZoomOut className="w-3 h-3" />
+              </Button>
+              <span className="text-xs min-w-[35px] text-center">{zoom}%</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleZoomIn}
+                className="text-white hover:bg-blue-800 h-6 w-6 p-0"
+              >
+                <ZoomIn className="w-3 h-3" />
+              </Button>
+            </div>
+            
+            {/* View controls */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleResetZoom}
+              className="text-white hover:bg-blue-700 h-8 w-8 p-0"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </Button>
+            
+            <Button
+              variant={showHeatmap ? "default" : "ghost"}
+              size="sm"
+              onClick={handleToggleHeatmap}
+              className={`h-8 w-8 p-0 ${showHeatmap ? 'bg-blue-800 text-white' : 'text-white hover:bg-blue-700'}`}
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+            
+            <Button
+              variant={gridVisible ? "default" : "ghost"}
+              size="sm"
+              onClick={handleToggleGrid}
+              className={`h-8 w-8 p-0 ${gridVisible ? 'bg-blue-800 text-white' : 'text-white hover:bg-blue-700'}`}
+            >
+              <Grid className="w-4 h-4" />
+            </Button>
+            
             <Button variant="ghost" size="sm" className="text-white hover:bg-blue-700 h-8 w-8 p-0">
               <Users className="w-4 h-4" />
             </Button>
@@ -154,6 +214,10 @@ const Index = () => {
         <AnnotationWorkspace 
           project={selectedProject!}
           onBack={handleBackToHome}
+          zoom={zoom}
+          showHeatmap={showHeatmap}
+          gridVisible={gridVisible}
+          onZoomChange={setZoom}
         />
       </div>
     );
@@ -331,6 +395,11 @@ const Index = () => {
                       aiAnnotations={aiAnnotations}
                       uploadedImage={uploadedImage}
                       uploadedImageName={uploadedImageName}
+                      zoom={zoom}
+                      showHeatmap={showHeatmap}
+                      gridVisible={gridVisible}
+                      onZoomChange={setZoom}
+                      hideControls={true}
                     />
                   </div>
                 </div>

@@ -18,9 +18,19 @@ import { useAnnotationTools } from '../hooks/useAnnotationTools';
 interface AnnotationWorkspaceProps {
   project: Project;
   onBack: () => void;
+  zoom?: number;
+  showHeatmap?: boolean;
+  gridVisible?: boolean;
+  onZoomChange?: (zoom: number) => void;
 }
 
-const AnnotationWorkspace = ({ project }: AnnotationWorkspaceProps) => {
+const AnnotationWorkspace = ({ 
+  project, 
+  zoom = 100, 
+  showHeatmap = true, 
+  gridVisible = false, 
+  onZoomChange 
+}: AnnotationWorkspaceProps) => {
   const [selectedTool, setSelectedTool] = useState<string>('select');
   const [sidebarTab, setSidebarTab] = useState('ai');
   const [aiAnnotations, setAiAnnotations] = useState<Annotation[]>([]);
@@ -152,6 +162,11 @@ const AnnotationWorkspace = ({ project }: AnnotationWorkspaceProps) => {
             aiAnnotations={aiAnnotations}
             uploadedImage={uploadedImage}
             uploadedImageName={uploadedImageName}
+            zoom={zoom}
+            showHeatmap={showHeatmap}
+            gridVisible={gridVisible}
+            onZoomChange={onZoomChange}
+            hideControls={true}
           />
         </div>
       </div>
