@@ -21,11 +21,33 @@ const Index = () => {
       id: 'analysis_project',
       name: 'Medical Image Analysis',
       description: 'AI-powered medical image analysis',
+      imageCount: 1,
+      annotationCount: 0,
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       lastModified: new Date().toISOString(),
-      thumbnail: uploadedImage || '/placeholder.svg',
-      collaborators: ['Dr. Smith', 'Dr. Johnson'],
-      status: 'active'
+      status: 'active',
+      collaborators: [
+        {
+          id: 'user1',
+          name: 'Dr. Smith',
+          email: 'dr.smith@hospital.com',
+          role: 'annotator' as const
+        },
+        {
+          id: 'user2',
+          name: 'Dr. Johnson',
+          email: 'dr.johnson@hospital.com',
+          role: 'reviewer' as const
+        }
+      ],
+      owner: {
+        id: 'current_user',
+        name: 'Current User',
+        email: 'user@hospital.com',
+        role: 'admin' as const
+      },
+      aiSuggestions: 0
     };
     
     setSelectedProject(mockProject);
