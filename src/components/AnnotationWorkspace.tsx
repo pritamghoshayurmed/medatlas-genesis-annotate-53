@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import { Layers, Zap, Users, History, Download, Save, Undo, Redo, Upload, Menu, X } from 'lucide-react';
+import { Layers, Zap, Users, Edit3, Download, Save, Undo, Redo, Upload, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import AIAssistPanel from './AIAssistPanel';
 import CollaborationPanel from './CollaborationPanel';
 import LayersPanel from './LayersPanel';
 import ImageUpload from './ImageUpload';
+import MobileAnnotationInterface from './MobileAnnotationInterface';
 import { Project, Annotation } from '../types';
 import { useIsMobile } from '../hooks/use-mobile';
 import { useAnnotationTools } from '../hooks/useAnnotationTools';
@@ -175,9 +177,9 @@ const AnnotationWorkspace = ({ project }: AnnotationWorkspaceProps) => {
                 <Users className="w-3 h-3" />
                 <span className="text-xs">Team</span>
               </TabsTrigger>
-              <TabsTrigger value="history" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-teal-600">
-                <History className="w-3 h-3" />
-                <span className="text-xs">History</span>
+              <TabsTrigger value="annotate" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-teal-600">
+                <Edit3 className="w-3 h-3" />
+                <span className="text-xs">Annotate</span>
               </TabsTrigger>
             </TabsList>
             {isMobile && (
@@ -220,32 +222,16 @@ const AnnotationWorkspace = ({ project }: AnnotationWorkspaceProps) => {
             <TabsContent value="team" className="h-full m-0">
               <CollaborationPanel />
             </TabsContent>
-            <TabsContent value="history" className="h-full m-0">
-              <div className="p-4">
-                <h3 className="text-white font-semibold mb-4">Version History</h3>
-                <div className="space-y-3">
-                  {[
-                    { version: 3, time: '2 minutes ago', action: 'AI segmentation completed' },
-                    { version: 2, time: '15 minutes ago', action: 'Manual annotation added' },
-                    { version: 1, time: '1 hour ago', action: 'Project created' }
-                  ].map((entry) => (
-                    <Card key={entry.version} className="bg-slate-800/50 border-slate-700">
-                      <CardContent className="p-3">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-white text-sm font-medium">Version {entry.version}</p>
-                            <p className="text-slate-400 text-xs">{entry.time}</p>
-                            <p className="text-slate-300 text-xs">{entry.action}</p>
-                          </div>
-                          <Button variant="ghost" size="sm" className="text-blue-400 hover:text-blue-300">
-                            Restore
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
+            <TabsContent value="annotate" className="h-full m-0">
+              <MobileAnnotationInterface 
+                selectedTool={selectedTool}
+                onToolSelect={setSelectedTool}
+                annotations={annotations}
+                aiAnnotations={aiAnnotations}
+                uploadedImage={uploadedImage}
+                onImageUpload={handleImageUpload}
+                onClearImage={handleClearImage}
+              />
             </TabsContent>
           </div>
         </Tabs>
