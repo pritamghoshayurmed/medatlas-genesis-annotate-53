@@ -5,6 +5,7 @@ import { useImageViewer } from '../hooks/useImageViewer';
 import ImageViewerControls from './ImageViewerControls';
 import ImageCanvas from './ImageCanvas';
 import ImageViewerStats from './ImageViewerStats';
+import { useIsMobile } from '../hooks/use-mobile';
 
 interface ImageViewerProps {
   selectedTool: string;
@@ -30,6 +31,7 @@ const ImageViewer = ({
   hideControls = false
 }: ImageViewerProps) => {
   const { annotations, drawingState } = useAnnotationTools();
+  const isMobile = useIsMobile();
   
   const {
     zoom,
@@ -71,16 +73,18 @@ const ImageViewer = ({
         hideControls={hideControls}
       />
 
-      {/* Tool info */}
-      <div className="absolute top-1 md:top-2 right-1 md:right-2 z-20 bg-teal-900/95 backdrop-blur-lg rounded-lg p-1 md:p-2 border border-teal-700/50">
-        <div className="text-teal-200 text-xs">
-          <span className="hidden md:inline">Tool: </span>
-          <span className="text-white capitalize">{selectedTool}</span>
-          {drawingState.isDrawing && (
-            <span className="text-cyan-400 ml-1 md:ml-2">Drawing...</span>
-          )}
+      {/* Tool info - only show on desktop or if no custom toolbar */}
+      {!isMobile && (
+        <div className="absolute top-1 md:top-2 right-1 md:right-2 z-20 bg-teal-900/95 backdrop-blur-lg rounded-lg p-1 md:p-2 border border-teal-700/50">
+          <div className="text-teal-200 text-xs">
+            <span className="hidden md:inline">Tool: </span>
+            <span className="text-white capitalize">{selectedTool}</span>
+            {drawingState.isDrawing && (
+              <span className="text-cyan-400 ml-1 md:ml-2">Drawing...</span>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main image container */}
       <div className="flex-1 flex items-center justify-center overflow-hidden p-1 md:p-4">

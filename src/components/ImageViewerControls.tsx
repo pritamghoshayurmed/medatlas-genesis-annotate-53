@@ -28,7 +28,7 @@ const ImageViewerControls = ({
   if (hideControls) return null;
 
   return (
-    <div className="absolute top-1 md:top-2 left-1 md:left-2 z-20 flex items-center space-x-1 bg-teal-900/95 backdrop-blur-lg rounded-lg p-1 border border-teal-700/50">
+    <div className="absolute bottom-1 md:top-2 left-1/2 -translate-x-1/2 md:left-2 md:translate-x-0 z-20 flex items-center space-x-1 bg-teal-900/95 backdrop-blur-lg rounded-lg p-1 border border-teal-700/50">
       <Button variant="ghost" size="sm" onClick={onZoomOut} className="text-teal-200 hover:text-white hover:bg-teal-700 h-6 w-6 md:h-8 md:w-8 p-0">
         <ZoomOut className="w-3 h-3 md:w-4 md:h-4" />
       </Button>
