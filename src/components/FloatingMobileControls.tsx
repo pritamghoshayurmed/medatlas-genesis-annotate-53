@@ -55,7 +55,10 @@ const FloatingMobileControls = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onZoomOut}
+                onClick={() => {
+                  onZoomOut();
+                  console.log('Mobile zoom out clicked');
+                }}
                 className="text-teal-200 hover:text-white hover:bg-teal-700 h-8 w-8 p-0"
               >
                 <ZoomOut className="w-4 h-4" />
@@ -66,7 +69,10 @@ const FloatingMobileControls = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onZoomIn}
+                onClick={() => {
+                  onZoomIn();
+                  console.log('Mobile zoom in clicked');
+                }}
                 className="text-teal-200 hover:text-white hover:bg-teal-700 h-8 w-8 p-0"
               >
                 <ZoomIn className="w-4 h-4" />
@@ -78,7 +84,10 @@ const FloatingMobileControls = ({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onResetZoom}
+                onClick={() => {
+                  onResetZoom();
+                  console.log('Mobile reset zoom clicked');
+                }}
                 className="text-teal-200 hover:text-white hover:bg-teal-700 h-8 w-8 p-0"
               >
                 <RotateCcw className="w-4 h-4" />
@@ -87,7 +96,10 @@ const FloatingMobileControls = ({
               <Button
                 variant={showHeatmap ? "default" : "ghost"}
                 size="sm"
-                onClick={onToggleHeatmap}
+                onClick={() => {
+                  onToggleHeatmap();
+                  console.log('Mobile heatmap toggle clicked', !showHeatmap);
+                }}
                 className={`h-8 w-8 p-0 ${
                   showHeatmap 
                     ? 'bg-teal-600 text-white hover:bg-teal-500' 
@@ -100,7 +112,10 @@ const FloatingMobileControls = ({
               <Button
                 variant={gridVisible ? "default" : "ghost"}
                 size="sm"
-                onClick={onToggleGrid}
+                onClick={() => {
+                  onToggleGrid();
+                  console.log('Mobile grid toggle clicked', !gridVisible);
+                }}
                 className={`h-8 w-8 p-0 ${
                   gridVisible 
                     ? 'bg-teal-600 text-white hover:bg-teal-500' 

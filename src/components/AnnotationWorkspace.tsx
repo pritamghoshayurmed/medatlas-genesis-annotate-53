@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Layers, Zap, Users, Edit3, Download, Save, Undo, Redo, Upload, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,12 @@ const AnnotationWorkspace = ({
   const [uploadedImageName, setUploadedImageName] = useState<string>('');
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
+  
+  // Mobile-specific state management
+  const [mobileZoom, setMobileZoom] = useState(100);
+  const [mobileShowHeatmap, setMobileShowHeatmap] = useState(true);
+  const [mobileGridVisible, setMobileGridVisible] = useState(false);
+  
   const isMobile = useIsMobile();
 
   // Get annotations from the hook to pass to layers panel
@@ -66,20 +73,51 @@ const AnnotationWorkspace = ({
     console.log('Image cleared');
   };
 
-  // Zoom and view handlers
+  // Mobile-specific handlers
+  const handleMobileZoomIn = () => {
+    const newZoom = Math.min(mobileZoom + 25, 400);
+    setMobileZoom(newZoom);
+    console.log('Mobile zoom in to:', newZoom);
+  };
+
+  const handleMobileZoomOut = () => {
+    const newZoom = Math.max(mobileZoom - 25, 25);
+    setMobileZoom(newZoom);
+    console.log('Mobile zoom out to:', newZoom);
+  };
+
+  const handleMobileResetZoom = () => {
+    setMobileZoom(100);
+    console.log('Mobile zoom reset to 100%');
+  };
+
+  const handleMobileToggleHeatmap = () => {
+    setMobileShowHeatmap(!mobileShowHeatmap);
+    console.log('Mobile heatmap toggled to:', !mobileShowHeatmap);
+  };
+
+  const handleMobileToggleGrid = () => {
+    setMobileGridVisible(!mobileGridVisible);
+    console.log('Mobile grid toggled to:', !mobileGridVisible);
+  };
+
+  // Desktop handlers (fallback)
   const handleZoomIn = () => onZoomChange && onZoomChange(Math.min(zoom + 25, 400));
   const handleZoomOut = () => onZoomChange && onZoomChange(Math.max(zoom - 25, 25));
   const handleResetZoom = () => onZoomChange && onZoomChange(100);
   const handleToggleHeatmap = () => {
-    // This would need to be handled by parent component
     console.log('Toggle heatmap');
   };
   const handleToggleGrid = () => {
-    // This would need to be handled by parent component
     console.log('Toggle grid');
   };
 
   const displayFileName = uploadedImageName || 'brain_scan_001.dcm';
+
+  // Use mobile state on mobile, external state on desktop
+  const currentZoom = isMobile ? mobileZoom : zoom;
+  const currentShowHeatmap = isMobile ? mobileShowHeatmap : showHeatmap;
+  const currentGridVisible = isMobile ? mobileGridVisible : gridVisible;
 
   return (
     <div className="flex h-[calc(100vh-80px)] relative bg-gradient-to-br from-teal-950 via-teal-900 to-cyan-950">
@@ -182,10 +220,10 @@ const AnnotationWorkspace = ({
             aiAnnotations={aiAnnotations}
             uploadedImage={uploadedImage}
             uploadedImageName={uploadedImageName}
-            zoom={zoom}
-            showHeatmap={showHeatmap}
-            gridVisible={gridVisible}
-            onZoomChange={onZoomChange}
+            zoom={currentZoom}
+            showHeatmap={currentShowHeatmap}
+            gridVisible={currentGridVisible}
+            onZoomChange={isMobile ? setMobileZoom : onZoomChange}
             hideControls={isMobile}
           />
         </div>
@@ -193,14 +231,14 @@ const AnnotationWorkspace = ({
         {/* Floating controls for mobile */}
         {isMobile && uploadedImage && (
           <FloatingMobileControls
-            zoom={zoom}
-            showHeatmap={showHeatmap}
-            gridVisible={gridVisible}
-            onZoomIn={handleZoomIn}
-            onZoomOut={handleZoomOut}
-            onResetZoom={handleResetZoom}
-            onToggleHeatmap={handleToggleHeatmap}
-            onToggleGrid={handleToggleGrid}
+            zoom={currentZoom}
+            showHeatmap={currentShowHeatmap}
+            gridVisible={currentGridVisible}
+            onZoomIn={handleMobileZoomIn}
+            onZoomOut={handleMobileZoomOut}
+            onResetZoom={handleMobileResetZoom}
+            onToggleHeatmap={handleMobileToggleHeatmap}
+            onToggleGrid={handleMobileToggleGrid}
           />
         )}
       </div>

@@ -93,14 +93,15 @@ const ImageCanvas = ({
     const x = clientX - rect.left;
     const y = clientY - rect.top;
     
-    console.log('Event position:', { x, y, rect });
+    console.log('Event position:', { x, y, rect, tool: selectedTool });
     return { x, y };
   };
 
   const handlePointerStart = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     const pos = getEventPosition(e);
-    console.log('Drawing start:', { pos, selectedTool });
+    console.log('Drawing start:', { pos, selectedTool, isMobile });
     
     if (selectedTool === 'freehand' || selectedTool === 'spline' || selectedTool === 'ruler') {
       startDrawing(pos, selectedTool);
@@ -111,6 +112,7 @@ const ImageCanvas = ({
     if (!drawingState.isDrawing) return;
     
     e.preventDefault();
+    e.stopPropagation();
     const pos = getEventPosition(e);
     
     if (selectedTool === 'freehand' || selectedTool === 'spline') {
@@ -122,6 +124,7 @@ const ImageCanvas = ({
     if (!drawingState.isDrawing) return;
     
     e.preventDefault();
+    e.stopPropagation();
     const pos = getEventPosition(e);
     console.log('Drawing end:', { pos, selectedTool, pathLength: drawingState.currentPath.length });
     
@@ -326,6 +329,12 @@ const ImageCanvas = ({
             onTouchStart={handlePointerStart}
             onTouchMove={handlePointerMove}
             onTouchEnd={handlePointerEnd}
+            onTouchCancel={() => {
+              if (drawingState.isDrawing) {
+                console.log('Touch cancelled, finishing drawing');
+                finishDrawing(selectedTool);
+              }
+            }}
           />
           
           {showHeatmap && heatmapPoints.length > 0 && (
