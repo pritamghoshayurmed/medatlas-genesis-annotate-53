@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Layers, Zap, Users, Edit3, Download, Save, Undo, Redo, Upload, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,6 +40,7 @@ const AnnotationWorkspace = ({
   const [uploadedImageName, setUploadedImageName] = useState<string>('');
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
+  const [imageDimensions, setImageDimensions] = useState({ width: 800, height: 600 });
   
   // Mobile-specific state management
   const [mobileZoom, setMobileZoom] = useState(100);
@@ -60,6 +60,15 @@ const AnnotationWorkspace = ({
   const handleImageUpload = (imageUrl: string, fileName: string) => {
     setUploadedImage(imageUrl);
     setUploadedImageName(fileName);
+    
+    // Get image dimensions when uploaded
+    const img = new Image();
+    img.onload = () => {
+      setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+      console.log('Image dimensions updated:', { width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.src = imageUrl;
+    
     console.log('Image uploaded:', fileName);
   };
 
@@ -70,6 +79,7 @@ const AnnotationWorkspace = ({
     setUploadedImage('');
     setUploadedImageName('');
     setAiAnnotations([]);
+    setImageDimensions({ width: 800, height: 600 });
     console.log('Image cleared');
   };
 
@@ -283,7 +293,12 @@ const AnnotationWorkspace = ({
                     />
                   </div>
                   <div className="flex-1">
-                    <AIAssistPanel onAnnotationsGenerated={handleAIAnnotationsGenerated} />
+                    <AIAssistPanel 
+                      onAnnotationsGenerated={handleAIAnnotationsGenerated}
+                      imageUrl={uploadedImage}
+                      imageWidth={imageDimensions.width}
+                      imageHeight={imageDimensions.height}
+                    />
                   </div>
                 </div>
               </TabsContent>

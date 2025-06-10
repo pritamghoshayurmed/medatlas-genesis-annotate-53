@@ -1,4 +1,3 @@
-
 import { useRef, useEffect, useState } from 'react';
 import { Annotation } from '../types';
 import { useAnnotationTools } from '../hooks/useAnnotationTools';
@@ -48,24 +47,53 @@ const ImageCanvas = ({
     const img = imageRef.current;
     const canvas = canvasRef.current;
     if (img && canvas) {
-      const naturalWidth = img.naturalWidth;
-      const naturalHeight = img.naturalHeight;
-      const displayWidth = img.clientWidth;
-      const displayHeight = img.clientHeight;
-      
-      console.log('Image dimensions:', {
-        natural: { width: naturalWidth, height: naturalHeight },
-        display: { width: displayWidth, height: displayHeight }
+      // Wait for next frame to ensure image dimensions are calculated
+      requestAnimationFrame(() => {
+        const naturalWidth = img.naturalWidth;
+        const naturalHeight = img.naturalHeight;
+        const displayWidth = img.clientWidth;
+        const displayHeight = img.clientHeight;
+        
+        console.log('Image dimensions:', {
+          natural: { width: naturalWidth, height: naturalHeight },
+          display: { width: displayWidth, height: displayHeight },
+          containerSize: containerRef.current ? {
+            width: containerRef.current.clientWidth,
+            height: containerRef.current.clientHeight
+          } : null
+        });
+        
+        // Ensure we use the actual displayed image dimensions
+        const actualWidth = displayWidth > 0 ? displayWidth : naturalWidth;
+        const actualHeight = displayHeight > 0 ? displayHeight : naturalHeight;
+        
+        setImageDimensions({ width: actualWidth, height: actualHeight });
+        canvas.width = actualWidth;
+        canvas.height = actualHeight;
+        
+        // Position canvas to overlay exactly on the image
+        canvas.style.width = `${actualWidth}px`;
+        canvas.style.height = `${actualHeight}px`;
+        canvas.style.position = 'absolute';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        
+        console.log('Canvas dimensions set to:', { width: actualWidth, height: actualHeight });
       });
-      
-      setImageDimensions({ width: displayWidth, height: displayHeight });
-      canvas.width = displayWidth;
-      canvas.height = displayHeight;
-      
-      canvas.style.width = `${displayWidth}px`;
-      canvas.style.height = `${displayHeight}px`;
     }
   };
+
+  // Handle window resize to maintain canvas alignment
+  useEffect(() => {
+    const handleResize = () => {
+      if (imageLoaded) {
+        handleImageLoad();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [imageLoaded]);
 
   const getEventPosition = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
@@ -93,7 +121,13 @@ const ImageCanvas = ({
     const x = clientX - rect.left;
     const y = clientY - rect.top;
     
-    console.log('Event position:', { x, y, rect, tool: selectedTool });
+    console.log('Event position:', { 
+      x, 
+      y, 
+      rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+      tool: selectedTool,
+      canvasSize: { width: canvas.width, height: canvas.height }
+    });
     return { x, y };
   };
 
@@ -293,60 +327,62 @@ const ImageCanvas = ({
       className="relative w-full h-full flex items-center justify-center"
       style={{ transform: `scale(${zoom / 100})` }}
     >
-      <img
-        ref={imageRef}
-        src={uploadedImage}
-        alt={uploadedImageName || "Medical image"}
-        className="max-w-full max-h-full bg-slate-800 rounded-lg shadow-2xl object-contain"
-        style={{ 
-          maxWidth: isMobile ? '100vw' : '700px', 
-          maxHeight: isMobile ? '100vh' : '500px',
-          width: 'auto',
-          height: 'auto'
-        }}
-        draggable={false}
-        onLoad={handleImageLoad}
-      />
-      
-      {imageLoaded && (
-        <>
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 z-10"
-            style={{
-              cursor: selectedTool === 'select' ? 'default' : 'crosshair',
-              touchAction: 'none'
-            }}
-            onMouseDown={handlePointerStart}
-            onMouseMove={handlePointerMove}
-            onMouseUp={handlePointerEnd}
-            onMouseLeave={() => {
-              if (drawingState.isDrawing) {
-                console.log('Mouse left canvas, finishing drawing');
-                finishDrawing(selectedTool);
-              }
-            }}
-            onTouchStart={handlePointerStart}
-            onTouchMove={handlePointerMove}
-            onTouchEnd={handlePointerEnd}
-            onTouchCancel={() => {
-              if (drawingState.isDrawing) {
-                console.log('Touch cancelled, finishing drawing');
-                finishDrawing(selectedTool);
-              }
-            }}
-          />
-          
-          {showHeatmap && heatmapPoints.length > 0 && (
-            <HeatmapOverlay
-              points={heatmapPoints}
-              imageWidth={imageDimensions.width}
-              imageHeight={imageDimensions.height}
-              opacity={0.4}
+      <div className="relative">
+        <img
+          ref={imageRef}
+          src={uploadedImage}
+          alt={uploadedImageName || "Medical image"}
+          className="max-w-full max-h-full bg-slate-800 rounded-lg shadow-2xl object-contain block"
+          style={{ 
+            maxWidth: isMobile ? '100vw' : '700px', 
+            maxHeight: isMobile ? '100vh' : '500px',
+            width: 'auto',
+            height: 'auto'
+          }}
+          draggable={false}
+          onLoad={handleImageLoad}
+        />
+        
+        {imageLoaded && (
+          <>
+            <canvas
+              ref={canvasRef}
+              className="absolute top-0 left-0 z-10 pointer-events-auto"
+              style={{
+                cursor: selectedTool === 'select' ? 'default' : 'crosshair',
+                touchAction: 'none'
+              }}
+              onMouseDown={handlePointerStart}
+              onMouseMove={handlePointerMove}
+              onMouseUp={handlePointerEnd}
+              onMouseLeave={() => {
+                if (drawingState.isDrawing) {
+                  console.log('Mouse left canvas, finishing drawing');
+                  finishDrawing(selectedTool);
+                }
+              }}
+              onTouchStart={handlePointerStart}
+              onTouchMove={handlePointerMove}
+              onTouchEnd={handlePointerEnd}
+              onTouchCancel={() => {
+                if (drawingState.isDrawing) {
+                  console.log('Touch cancelled, finishing drawing');
+                  finishDrawing(selectedTool);
+                }
+              }}
             />
-          )}
-        </>
-      )}
+            
+            {showHeatmap && heatmapPoints.length > 0 && (
+              <HeatmapOverlay
+                points={heatmapPoints}
+                imageWidth={imageDimensions.width}
+                imageHeight={imageDimensions.height}
+                opacity={0.4}
+              />
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 };

@@ -1,80 +1,123 @@
 
 import { Annotation } from '../types';
 
-export interface AnnotationTool {
-  id: string;
-  name: string;
-  description: string;
-  icon: any;
-}
-
-export const generateHeatmapPoints = (imageWidth: number, imageHeight: number, annotations: Annotation[]) => {
-  const points = [];
+export const generateHeatmapPoints = (
+  imageWidth: number,
+  imageHeight: number,
+  annotations: Annotation[]
+) => {
+  const points: { x: number; y: number; intensity: number }[] = [];
   
-  // Generate points based on AI annotations
   annotations.forEach(annotation => {
     if (annotation.coordinates && annotation.coordinates.length > 0) {
-      const centerX = annotation.coordinates.reduce((sum, coord) => sum + coord[0], 0) / annotation.coordinates.length;
-      const centerY = annotation.coordinates.reduce((sum, coord) => sum + coord[1], 0) / annotation.coordinates.length;
-      
-      // Add main point
-      points.push({
-        x: centerX,
-        y: centerY,
-        intensity: annotation.confidence || 0.8,
-        region: annotation.label || 'Unknown',
-        color: getColorForLabel(annotation.label || 'Unknown')
-      });
-
-      // Add surrounding points for better heatmap effect
-      for (let i = 0; i < 8; i++) {
-        const angle = (i / 8) * 2 * Math.PI;
-        const distance = 20 + Math.random() * 30;
-        const intensity = (annotation.confidence || 0.8) * (0.3 + Math.random() * 0.4);
+      // Add multiple points around each annotation for better heatmap visualization
+      annotation.coordinates.forEach(coord => {
+        const [x, y] = coord;
+        const intensity = annotation.confidence || 0.5;
         
-        points.push({
-          x: centerX + Math.cos(angle) * distance,
-          y: centerY + Math.sin(angle) * distance,
-          intensity,
-          region: annotation.label || 'Unknown',
-          color: getColorForLabel(annotation.label || 'Unknown')
-        });
-      }
+        // Add the main point
+        points.push({ x, y, intensity });
+        
+        // Add surrounding points for better heat effect
+        const radius = 20;
+        for (let i = 0; i < 8; i++) {
+          const angle = (i * Math.PI * 2) / 8;
+          const offsetX = Math.cos(angle) * radius;
+          const offsetY = Math.sin(angle) * radius;
+          
+          points.push({
+            x: Math.max(0, Math.min(imageWidth, x + offsetX)),
+            y: Math.max(0, Math.min(imageHeight, y + offsetY)),
+            intensity: intensity * 0.3
+          });
+        }
+      });
     }
   });
 
   return points;
 };
 
-export const getColorForLabel = (label: string): string => {
-  const colorMap: { [key: string]: string } = {
-    'Glioblastoma': '#ef4444',
-    'Peritumoral Edema': '#f59e0b',
-    'Brain': '#3b82f6',
-    'Ventricles': '#06b6d4',
-    'Cerebellum': '#10b981',
-    'Frontal Cortex': '#8b5cf6',
-    'Parietal Cortex': '#ec4899',
-    'Temporal Cortex': '#f97316',
-    'Occipital Cortex': '#84cc16',
-    'Hippocampus': '#06b6d4',
-    'Amygdala': '#f59e0b',
-    'Brainstem': '#6366f1'
-  };
-  
-  return colorMap[label] || '#64748b';
+export const generateRandomAIAnnotations = (imageWidth: number, imageHeight: number, count: number = 3): Annotation[] => {
+  const annotations: Annotation[] = [];
+  const labels = [
+    'Tumor Region',
+    'Anomalous Tissue', 
+    'Suspicious Area',
+    'Lesion',
+    'Glioblastoma',
+    'Peritumoral Edema',
+    'Enhancement Region',
+    'Hemorrhage',
+    'Necrosis',
+    'White Matter',
+    'Gray Matter',
+    'Cerebral Cortex'
+  ];
+
+  const colors = ['#fbbf24', '#f59e0b', '#d97706', '#92400e', '#ef4444', '#dc2626', '#b91c1c', '#991b1b'];
+
+  for (let i = 0; i < count; i++) {
+    // Generate completely random positions across the entire image
+    const centerX = Math.random() * imageWidth;
+    const centerY = Math.random() * imageHeight;
+    
+    // Generate random shape type
+    const shapeType = Math.random() < 0.5 ? 'polygon' : 'rectangle';
+    
+    let coordinates: number[][];
+    
+    if (shapeType === 'polygon') {
+      // Generate a random polygon with 4-8 points
+      const numPoints = 4 + Math.floor(Math.random() * 5);
+      const radius = 20 + Math.random() * 60; // Random size between 20-80px
+      coordinates = [];
+      
+      for (let j = 0; j < numPoints; j++) {
+        const angle = (j * Math.PI * 2) / numPoints + (Math.random() - 0.5) * 0.8;
+        const pointRadius = radius * (0.7 + Math.random() * 0.6); // Vary the radius for irregular shape
+        
+        const x = Math.max(10, Math.min(imageWidth - 10, centerX + Math.cos(angle) * pointRadius));
+        const y = Math.max(10, Math.min(imageHeight - 10, centerY + Math.sin(angle) * pointRadius));
+        
+        coordinates.push([x, y]);
+      }
+    } else {
+      // Generate a random rectangle
+      const width = 30 + Math.random() * 80;
+      const height = 30 + Math.random() * 80;
+      
+      const x1 = Math.max(10, Math.min(imageWidth - width - 10, centerX - width / 2));
+      const y1 = Math.max(10, Math.min(imageHeight - height - 10, centerY - height / 2));
+      const x2 = x1 + width;
+      const y2 = y1 + height;
+      
+      coordinates = [[x1, y1], [x2, y1], [x2, y2], [x1, y2]];
+    }
+
+    const label = labels[Math.floor(Math.random() * labels.length)];
+    const confidence = 0.7 + Math.random() * 0.3; // Between 70-100%
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    annotations.push({
+      id: `ai_random_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`,
+      type: shapeType,
+      coordinates,
+      label,
+      confidence,
+      isAIGenerated: true,
+      author: 'MONAI',
+      timestamp: new Date().toISOString(),
+      color
+    });
+  }
+
+  console.log('Generated random AI annotations:', annotations);
+  return annotations;
 };
 
-export const calculateAnnotationMetrics = (annotations: Annotation[]) => {
-  const total = annotations.length;
-  const aiGenerated = annotations.filter(ann => ann.isAIGenerated).length;
-  const manual = total - aiGenerated;
-  const avgConfidence = annotations.reduce((sum, ann) => sum + (ann.confidence || 0), 0) / total;
-
-  return {
-    total,
-    aiGenerated,
-    manual,
-    avgConfidence: Math.round(avgConfidence * 100)
-  };
+export const generateAIAnnotationsForImage = (imageWidth: number, imageHeight: number): Annotation[] => {
+  // Generate 2-5 random annotations across the image
+  const annotationCount = 2 + Math.floor(Math.random() * 4);
+  return generateRandomAIAnnotations(imageWidth, imageHeight, annotationCount);
 };

@@ -1,128 +1,41 @@
 
-import { monaiBackend } from './mockMonaiBackend';
 import { Annotation } from '../types';
+import { generateAIAnnotationsForImage } from '../utils/annotationUtils';
 
-export interface AIModel {
-  id: string;
-  name: string;
-  description: string;
-  accuracy: number;
-  modality: string[];
-}
+export const generateAIAnnotations = async (
+  imageFile: File,
+  imageWidth?: number,
+  imageHeight?: number
+): Promise<Annotation[]> => {
+  console.log('Starting AI annotation generation for image:', imageFile.name);
+  
+  // Simulate AI processing time
+  await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2000));
+  
+  // Use provided dimensions or default values
+  const width = imageWidth || 800;
+  const height = imageHeight || 600;
+  
+  console.log('Generating AI annotations for image dimensions:', { width, height });
+  
+  // Generate random annotations across the entire image
+  const annotations = generateAIAnnotationsForImage(width, height);
+  
+  console.log('AI annotation generation completed:', annotations.length, 'annotations generated');
+  
+  return annotations;
+};
 
-export interface SegmentationJob {
-  jobId: string;
-  status: 'processing' | 'completed' | 'failed';
-  progress: number;
-  results?: Annotation[];
-  startTime?: number;
-  modelType?: string;
-}
-
-class AIService {
-  private activeJobs: Map<string, SegmentationJob> = new Map();
-  private jobCallbacks: Map<string, (job: SegmentationJob) => void> = new Map();
-
-  async getAvailableModels(): Promise<AIModel[]> {
-    try {
-      const models = await monaiBackend.getAvailableModels();
-      console.log('AI Service: Available models loaded', models);
-      return models;
-    } catch (error) {
-      console.error('AI Service: Failed to load models', error);
-      throw error;
-    }
-  }
-
-  async startSegmentation(imageId: string, modelId: string, onProgress?: (job: SegmentationJob) => void): Promise<string> {
-    try {
-      console.log(`AI Service: Starting segmentation with model ${modelId} for image ${imageId}`);
-      
-      const result = await monaiBackend.runSegmentation(imageId, modelId);
-      const job: SegmentationJob = {
-        jobId: result.jobId,
-        status: result.status,
-        progress: result.progress
-      };
-
-      this.activeJobs.set(result.jobId, job);
-      
-      if (onProgress) {
-        this.jobCallbacks.set(result.jobId, onProgress);
-        this.monitorJob(result.jobId);
-      }
-
-      return result.jobId;
-    } catch (error) {
-      console.error('AI Service: Failed to start segmentation', error);
-      throw error;
-    }
-  }
-
-  async getJobStatus(jobId: string): Promise<SegmentationJob> {
-    try {
-      const status = await monaiBackend.getJobStatus(jobId);
-      const job: SegmentationJob = {
-        jobId: status.jobId,
-        status: status.status,
-        progress: status.progress,
-        results: status.results,
-        startTime: status.startTime,
-        modelType: status.modelType
-      };
-
-      this.activeJobs.set(jobId, job);
-      return job;
-    } catch (error) {
-      console.error(`AI Service: Failed to get status for job ${jobId}`, error);
-      throw error;
-    }
-  }
-
-  private async monitorJob(jobId: string) {
-    const callback = this.jobCallbacks.get(jobId);
-    if (!callback) return;
-
-    const checkStatus = async () => {
-      try {
-        const job = await this.getJobStatus(jobId);
-        callback(job);
-
-        if (job.status === 'processing') {
-          setTimeout(checkStatus, 1000); // Check every second
-        } else {
-          this.jobCallbacks.delete(jobId);
-          console.log(`AI Service: Job ${jobId} monitoring completed`);
-        }
-      } catch (error) {
-        console.error(`AI Service: Error monitoring job ${jobId}`, error);
-        this.jobCallbacks.delete(jobId);
-      }
-    };
-
-    setTimeout(checkStatus, 1000);
-  }
-
-  async calculateMetrics(groundTruth: Annotation[], predicted: Annotation[]) {
-    try {
-      const metrics = await monaiBackend.calculateMetrics(groundTruth, predicted);
-      console.log('AI Service: Metrics calculated', metrics);
-      return metrics;
-    } catch (error) {
-      console.error('AI Service: Failed to calculate metrics', error);
-      throw error;
-    }
-  }
-
-  getActiveJobs(): SegmentationJob[] {
-    return Array.from(this.activeJobs.values());
-  }
-
-  cancelJob(jobId: string): void {
-    this.activeJobs.delete(jobId);
-    this.jobCallbacks.delete(jobId);
-    console.log(`AI Service: Job ${jobId} cancelled`);
-  }
-}
-
-export const aiService = new AIService();
+export const runSegmentation = async (imageUrl: string, imageWidth: number, imageHeight: number): Promise<Annotation[]> => {
+  console.log('Running AI segmentation on image with dimensions:', { imageWidth, imageHeight });
+  
+  // Simulate MONAI processing time
+  await new Promise(resolve => setTimeout(resolve, 3000 + Math.random() * 2000));
+  
+  // Generate random annotations distributed across the entire image area
+  const segmentationResults = generateAIAnnotationsForImage(imageWidth, imageHeight);
+  
+  console.log('Segmentation completed with', segmentationResults.length, 'regions identified');
+  
+  return segmentationResults;
+};
