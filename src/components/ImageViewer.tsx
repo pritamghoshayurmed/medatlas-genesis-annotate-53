@@ -34,10 +34,12 @@ const ImageViewer = ({
   const {
     zoom,
     showHeatmap,
+    gridVisible,
     handleZoomIn,
     handleZoomOut,
     handleResetZoom,
-    handleToggleHeatmap
+    handleToggleHeatmap,
+    handleToggleGrid
   } = useImageViewer({
     externalZoom,
     externalShowHeatmap,
@@ -56,24 +58,26 @@ const ImageViewer = ({
   });
 
   return (
-    <div className="relative h-full flex flex-col bg-slate-950">
+    <div className="relative h-full flex flex-col bg-gradient-to-br from-teal-950 via-teal-900 to-cyan-950">
       <ImageViewerControls
         zoom={zoom}
         showHeatmap={showHeatmap}
+        gridVisible={gridVisible}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
         onResetZoom={handleResetZoom}
         onToggleHeatmap={handleToggleHeatmap}
+        onToggleGrid={handleToggleGrid}
         hideControls={hideControls}
       />
 
       {/* Tool info */}
-      <div className="absolute top-1 md:top-2 right-1 md:right-2 z-20 bg-slate-900/95 backdrop-blur-lg rounded-lg p-1 md:p-2 border border-slate-700/50">
-        <div className="text-slate-300 text-xs">
+      <div className="absolute top-1 md:top-2 right-1 md:right-2 z-20 bg-teal-900/95 backdrop-blur-lg rounded-lg p-1 md:p-2 border border-teal-700/50">
+        <div className="text-teal-200 text-xs">
           <span className="hidden md:inline">Tool: </span>
           <span className="text-white capitalize">{selectedTool}</span>
           {drawingState.isDrawing && (
-            <span className="text-green-400 ml-1 md:ml-2">Drawing...</span>
+            <span className="text-cyan-400 ml-1 md:ml-2">Drawing...</span>
           )}
         </div>
       </div>
@@ -90,8 +94,8 @@ const ImageViewer = ({
             showHeatmap={showHeatmap}
           />
         ) : (
-          <div className="text-center text-slate-400 p-2 md:p-4">
-            <div className="bg-slate-800 rounded-lg p-4 md:p-8 border-2 border-dashed border-slate-600">
+          <div className="text-center text-teal-300 p-2 md:p-4">
+            <div className="bg-teal-800/50 rounded-lg p-4 md:p-8 border-2 border-dashed border-teal-600">
               <p className="text-sm md:text-lg mb-1 md:mb-2">No image uploaded</p>
               <p className="text-xs md:text-sm">Upload an image to start annotating</p>
             </div>

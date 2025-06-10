@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { ArrowLeft, Users, Settings, Upload, FileText, Brain, Scan, Stethoscope, Home, Calendar, MessageCircle, User, ZoomIn, ZoomOut, RotateCcw, Eye, Grid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -109,42 +110,42 @@ const Index = () => {
       name: 'X-Ray Analysis',
       description: 'Analyze bone structure and tissues',
       icon: FileText,
-      color: 'text-blue-500'
+      color: 'text-teal-400'
     },
     {
       id: 'ct',
       name: 'CT Scan',
       description: 'Detailed cross-sectional images',
       icon: Brain,
-      color: 'text-blue-500'
+      color: 'text-teal-400'
     },
     {
       id: 'mri',
       name: 'MRI Scan',
       description: 'Detailed soft tissue imaging',
       icon: Brain,
-      color: 'text-blue-500'
+      color: 'text-teal-400'
     },
     {
       id: 'ultrasound',
       name: 'Ultrasound',
       description: 'Sound wave imaging',
       icon: Stethoscope,
-      color: 'text-blue-500'
+      color: 'text-teal-400'
     }
   ];
 
   if (activeView === 'annotation') {
     return (
-      <div className="min-h-screen bg-slate-950">
+      <div className="min-h-screen bg-gradient-to-br from-teal-950 via-teal-900 to-cyan-950">
         {/* Enhanced header for annotation workspace with mobile controls */}
-        <div className="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white px-4 py-3 flex items-center justify-between shadow-lg">
           <div className="flex items-center space-x-3">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleBackToHome}
-              className="text-white hover:bg-blue-700 h-8 w-8 p-0"
+              className="text-white hover:bg-teal-700 h-8 w-8 p-0"
             >
               <ArrowLeft className="w-4 h-4" />
             </Button>
@@ -154,12 +155,12 @@ const Index = () => {
           {/* Mobile-friendly controls */}
           <div className="flex items-center space-x-1">
             {/* Zoom controls */}
-            <div className="flex items-center space-x-1 bg-blue-700/50 rounded px-2 py-1">
+            <div className="flex items-center space-x-1 bg-teal-700/50 rounded px-2 py-1">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleZoomOut}
-                className="text-white hover:bg-blue-800 h-6 w-6 p-0"
+                className="text-white hover:bg-teal-800 h-6 w-6 p-0"
               >
                 <ZoomOut className="w-3 h-3" />
               </Button>
@@ -168,7 +169,7 @@ const Index = () => {
                 variant="ghost"
                 size="sm"
                 onClick={handleZoomIn}
-                className="text-white hover:bg-blue-800 h-6 w-6 p-0"
+                className="text-white hover:bg-teal-800 h-6 w-6 p-0"
               >
                 <ZoomIn className="w-3 h-3" />
               </Button>
@@ -179,7 +180,7 @@ const Index = () => {
               variant="ghost"
               size="sm"
               onClick={handleResetZoom}
-              className="text-white hover:bg-blue-700 h-8 w-8 p-0"
+              className="text-white hover:bg-teal-700 h-8 w-8 p-0"
             >
               <RotateCcw className="w-4 h-4" />
             </Button>
@@ -188,7 +189,7 @@ const Index = () => {
               variant={showHeatmap ? "default" : "ghost"}
               size="sm"
               onClick={handleToggleHeatmap}
-              className={`h-8 w-8 p-0 ${showHeatmap ? 'bg-blue-800 text-white' : 'text-white hover:bg-blue-700'}`}
+              className={`h-8 w-8 p-0 ${showHeatmap ? 'bg-teal-800 text-white' : 'text-white hover:bg-teal-700'}`}
             >
               <Eye className="w-4 h-4" />
             </Button>
@@ -197,15 +198,15 @@ const Index = () => {
               variant={gridVisible ? "default" : "ghost"}
               size="sm"
               onClick={handleToggleGrid}
-              className={`h-8 w-8 p-0 ${gridVisible ? 'bg-blue-800 text-white' : 'text-white hover:bg-blue-700'}`}
+              className={`h-8 w-8 p-0 ${gridVisible ? 'bg-teal-800 text-white' : 'text-white hover:bg-teal-700'}`}
             >
               <Grid className="w-4 h-4" />
             </Button>
             
-            <Button variant="ghost" size="sm" className="text-white hover:bg-blue-700 h-8 w-8 p-0">
+            <Button variant="ghost" size="sm" className="text-white hover:bg-teal-700 h-8 w-8 p-0">
               <Users className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="sm" className="text-white hover:bg-blue-700 h-8 w-8 p-0">
+            <Button variant="ghost" size="sm" className="text-white hover:bg-teal-700 h-8 w-8 p-0">
               <Settings className="w-4 h-4" />
             </Button>
           </div>
@@ -224,38 +225,38 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-teal-100">
       {/* Header */}
-      <div className="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white px-4 py-3 flex items-center justify-between shadow-lg">
         <div className="flex items-center space-x-3">
           <Button
             variant="ghost"
             size="sm"
-            className="text-white hover:bg-blue-700 h-8 w-8 p-0"
+            className="text-white hover:bg-teal-700 h-8 w-8 p-0"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <h1 className="text-lg font-semibold">Diagnosis Engine</h1>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" className="text-white hover:bg-blue-700 h-8 w-8 p-0">
+          <Button variant="ghost" size="sm" className="text-white hover:bg-teal-700 h-8 w-8 p-0">
             <Users className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="sm" className="text-white hover:bg-blue-700 h-8 w-8 p-0">
+          <Button variant="ghost" size="sm" className="text-white hover:bg-teal-700 h-8 w-8 p-0">
             <Settings className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
       {/* Navigation tabs */}
-      <div className="bg-white border-b">
+      <div className="bg-white border-b border-teal-200 shadow-sm">
         <div className="flex">
           <button
             onClick={() => setActiveTab('analyze')}
             className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'analyze'
-                ? 'text-blue-600 border-blue-600 bg-white'
-                : 'text-gray-500 border-transparent bg-gray-50'
+                ? 'text-teal-600 border-teal-600 bg-white'
+                : 'text-gray-500 border-transparent bg-teal-50/50'
             }`}
           >
             Analyze
@@ -264,8 +265,8 @@ const Index = () => {
             onClick={() => setActiveTab('annotate')}
             className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'annotate'
-                ? 'text-blue-600 border-blue-600 bg-white'
-                : 'text-gray-500 border-transparent bg-gray-50'
+                ? 'text-teal-600 border-teal-600 bg-white'
+                : 'text-gray-500 border-transparent bg-teal-50/50'
             }`}
           >
             Annotate
@@ -279,8 +280,8 @@ const Index = () => {
           <>
             {/* Medical Image Analysis Section */}
             <div className="text-center py-6">
-              <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <FileText className="w-8 h-8 text-blue-600" />
+              <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-lg flex items-center justify-center mx-auto mb-4 shadow-md">
+                <FileText className="w-8 h-8 text-teal-600" />
               </div>
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Medical Image Analysis</h2>
               <p className="text-gray-600 text-sm px-4">
@@ -289,18 +290,18 @@ const Index = () => {
             </div>
 
             {/* Analysis Options */}
-            <Card className="bg-white">
+            <Card className="bg-white border border-teal-200 shadow-md">
               <CardContent className="p-4">
                 <button
                   onClick={() => setAnalysisOptions(!analysisOptions)}
                   className="w-full flex items-center justify-between py-2"
                 >
                   <div className="flex items-center space-x-3">
-                    <Settings className="w-5 h-5 text-gray-600" />
+                    <Settings className="w-5 h-5 text-teal-600" />
                     <span className="font-medium text-gray-900">Analysis Options</span>
                   </div>
                   <div className={`transform transition-transform ${analysisOptions ? 'rotate-180' : ''}`}>
-                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -309,11 +310,11 @@ const Index = () => {
             </Card>
 
             {/* Image Upload Section */}
-            <Card className="bg-white border-2 border-dashed border-gray-300">
+            <Card className="bg-white border-2 border-dashed border-teal-300 shadow-md">
               <CardContent className="p-6">
                 <div className="text-center">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <Upload className="w-6 h-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-lg flex items-center justify-center mx-auto mb-4 shadow-md">
+                    <Upload className="w-6 h-6 text-teal-600" />
                   </div>
                   <h3 className="font-medium text-gray-900 mb-2">Drag & drop medical image here</h3>
                   <p className="text-sm text-gray-500 mb-2">Supported formats: JPEG, PNG, DICOM, NIfTI</p>
@@ -333,9 +334,9 @@ const Index = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Scan Type</h3>
               <div className="grid grid-cols-2 gap-4">
                 {scanTypes.map((scan) => (
-                  <Card key={scan.id} className="bg-white hover:shadow-md transition-shadow cursor-pointer">
+                  <Card key={scan.id} className="bg-white hover:shadow-lg transition-all duration-300 cursor-pointer border border-teal-200 hover:border-teal-300">
                     <CardContent className="p-4 text-center">
-                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-lg flex items-center justify-center mx-auto mb-3 shadow-md">
                         <scan.icon className={`w-6 h-6 ${scan.color}`} />
                       </div>
                       <h4 className="font-medium text-gray-900 mb-1">{scan.name}</h4>
@@ -351,7 +352,7 @@ const Index = () => {
               <div className="pt-4">
                 <Button 
                   onClick={handleStartAnalysis}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
+                  className="w-full bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white py-3 shadow-md"
                 >
                   Start Analysis & Annotation
                 </Button>
@@ -361,11 +362,11 @@ const Index = () => {
         )}
 
         {activeTab === 'annotate' && (
-          <div className="bg-slate-950 rounded-lg min-h-[600px] relative">
+          <div className="bg-gradient-to-br from-teal-950 via-teal-900 to-cyan-950 rounded-lg min-h-[600px] relative shadow-lg border border-teal-700">
             {uploadedImage ? (
               <div className="flex h-[600px]">
                 {/* Left sidebar - tools */}
-                <div className="w-16 bg-slate-900/90 backdrop-blur-lg border-r border-slate-700/50 flex flex-col items-center py-4 space-y-2 rounded-l-lg">
+                <div className="w-16 bg-teal-900/90 backdrop-blur-lg border-r border-teal-700/50 flex flex-col items-center py-4 space-y-2 rounded-l-lg">
                   <AnnotationTools 
                     selectedTool={selectedTool} 
                     onToolSelect={setSelectedTool} 
@@ -375,15 +376,15 @@ const Index = () => {
                 {/* Main workspace */}
                 <div className="flex-1 flex flex-col min-w-0">
                   {/* Header */}
-                  <div className="bg-slate-800/90 border-b border-slate-700/50 px-4 py-3 flex items-center justify-between">
+                  <div className="bg-teal-800/90 border-b border-teal-700/50 px-4 py-3 flex items-center justify-between">
                     <div className="flex items-center space-x-4 min-w-0">
                       <h3 className="text-white font-semibold text-base truncate">{uploadedImageName || 'medical_image.jpg'}</h3>
-                      <div className="hidden lg:flex items-center space-x-2 text-sm text-slate-400">
+                      <div className="hidden lg:flex items-center space-x-2 text-sm text-teal-300">
                         <span>Custom Upload</span>
                         <span>•</span>
-                        <span className="text-green-400">Image Loaded</span>
+                        <span className="text-cyan-400">Image Loaded</span>
                         <span>•</span>
-                        <span className="text-yellow-400">Ready for Annotation</span>
+                        <span className="text-teal-300">Ready for Annotation</span>
                       </div>
                     </div>
                   </div>
@@ -405,19 +406,19 @@ const Index = () => {
                 </div>
 
                 {/* Right sidebar */}
-                <div className="w-80 bg-slate-900/90 backdrop-blur-lg border-l border-slate-700/50 rounded-r-lg">
+                <div className="w-80 bg-teal-900/90 backdrop-blur-lg border-l border-teal-700/50 rounded-r-lg">
                   <Tabs value={sidebarTab} onValueChange={setSidebarTab} className="h-full flex flex-col">
                     <div className="p-2">
-                      <TabsList className="grid w-full grid-cols-3 bg-slate-800/50 h-16">
-                        <TabsTrigger value="ai" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-teal-600">
+                      <TabsList className="grid w-full grid-cols-3 bg-teal-800/50 h-16">
+                        <TabsTrigger value="ai" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-cyan-600">
                           <Brain className="w-3 h-3" />
                           <span className="text-xs">AI</span>
                         </TabsTrigger>
-                        <TabsTrigger value="layers" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-teal-600">
+                        <TabsTrigger value="layers" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-cyan-600">
                           <FileText className="w-3 h-3" />
                           <span className="text-xs">Layers</span>
                         </TabsTrigger>
-                        <TabsTrigger value="team" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-teal-600">
+                        <TabsTrigger value="team" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-cyan-600">
                           <Users className="w-3 h-3" />
                           <span className="text-xs">Team</span>
                         </TabsTrigger>
@@ -445,9 +446,9 @@ const Index = () => {
               </div>
             ) : (
               <div className="flex items-center justify-center h-[600px] text-center">
-                <div className="text-slate-400 p-8">
-                  <div className="bg-slate-800 rounded-lg p-8 border-2 border-dashed border-slate-600">
-                    <Upload className="w-16 h-16 mx-auto mb-4 text-slate-500" />
+                <div className="text-teal-300 p-8">
+                  <div className="bg-teal-800/50 rounded-lg p-8 border-2 border-dashed border-teal-600">
+                    <Upload className="w-16 h-16 mx-auto mb-4 text-teal-400" />
                     <p className="text-lg mb-2">No image uploaded</p>
                     <p className="text-sm">Upload an image in the "Analyze" tab to start annotating</p>
                   </div>
@@ -459,21 +460,21 @@ const Index = () => {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-teal-200 shadow-lg">
         <div className="grid grid-cols-5 py-2">
           <button className="flex flex-col items-center py-2 px-2">
-            <Home className="w-5 h-5 text-gray-600 mb-1" />
-            <span className="text-xs text-gray-600">Home</span>
+            <Home className="w-5 h-5 text-teal-600 mb-1" />
+            <span className="text-xs text-teal-600">Home</span>
           </button>
           <button className="flex flex-col items-center py-2 px-2">
             <Calendar className="w-5 h-5 text-gray-400 mb-1" />
             <span className="text-xs text-gray-400">Appointments</span>
           </button>
           <button className="flex flex-col items-center py-2 px-2">
-            <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center mb-1">
+            <div className="w-5 h-5 bg-gradient-to-r from-teal-600 to-cyan-600 rounded-full flex items-center justify-center mb-1">
               <FileText className="w-3 h-3 text-white" />
             </div>
-            <span className="text-xs text-blue-600">Diagnosis</span>
+            <span className="text-xs text-teal-600">Diagnosis</span>
           </button>
           <button className="flex flex-col items-center py-2 px-2">
             <MessageCircle className="w-5 h-5 text-gray-400 mb-1" />

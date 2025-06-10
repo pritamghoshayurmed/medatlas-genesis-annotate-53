@@ -11,6 +11,7 @@ import CollaborationPanel from './CollaborationPanel';
 import LayersPanel from './LayersPanel';
 import ImageUpload from './ImageUpload';
 import MobileAnnotationInterface from './MobileAnnotationInterface';
+import MobileAnnotationToolbar from './MobileAnnotationToolbar';
 import { Project, Annotation } from '../types';
 import { useIsMobile } from '../hooks/use-mobile';
 import { useAnnotationTools } from '../hooks/useAnnotationTools';
@@ -64,10 +65,23 @@ const AnnotationWorkspace = ({
     console.log('Image cleared');
   };
 
+  // Zoom and view handlers
+  const handleZoomIn = () => onZoomChange && onZoomChange(Math.min(zoom + 25, 400));
+  const handleZoomOut = () => onZoomChange && onZoomChange(Math.max(zoom - 25, 25));
+  const handleResetZoom = () => onZoomChange && onZoomChange(100);
+  const handleToggleHeatmap = () => {
+    // This would need to be handled by parent component
+    console.log('Toggle heatmap');
+  };
+  const handleToggleGrid = () => {
+    // This would need to be handled by parent component
+    console.log('Toggle grid');
+  };
+
   const displayFileName = uploadedImageName || 'brain_scan_001.dcm';
 
   return (
-    <div className="flex h-[calc(100vh-80px)] relative bg-slate-950">
+    <div className="flex h-[calc(100vh-80px)] relative bg-gradient-to-br from-teal-950 via-teal-900 to-cyan-950">
       {/* Mobile overlay buttons */}
       {isMobile && (
         <div className="absolute top-2 left-2 z-50 flex space-x-1">
@@ -75,7 +89,7 @@ const AnnotationWorkspace = ({
             variant="ghost"
             size="sm"
             onClick={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
-            className="bg-slate-900/90 text-white hover:bg-slate-800 border border-slate-700 h-8 w-8 p-0"
+            className="bg-teal-900/90 text-white hover:bg-teal-800 border border-teal-700 h-8 w-8 p-0"
           >
             <Menu className="w-3 h-3" />
           </Button>
@@ -83,7 +97,7 @@ const AnnotationWorkspace = ({
             variant="ghost"
             size="sm"
             onClick={() => setIsRightSidebarOpen(!isRightSidebarOpen)}
-            className="bg-slate-900/90 text-white hover:bg-slate-800 border border-slate-700 h-8 w-8 p-0"
+            className="bg-teal-900/90 text-white hover:bg-teal-800 border border-teal-700 h-8 w-8 p-0"
           >
             <Zap className="w-3 h-3" />
           </Button>
@@ -93,15 +107,15 @@ const AnnotationWorkspace = ({
       {/* Left sidebar - tools */}
       <div className={`${
         isMobile 
-          ? `fixed top-0 left-0 h-full w-16 bg-slate-900/95 backdrop-blur-lg z-40 transform transition-transform duration-300 ${isLeftSidebarOpen ? 'translate-x-0' : '-translate-x-full'}` 
-          : 'w-16 bg-slate-900/90 backdrop-blur-lg'
-      } border-r border-slate-700/50 flex flex-col items-center py-2 md:py-4 space-y-2`}>
+          ? `fixed top-0 left-0 h-full w-16 bg-teal-900/95 backdrop-blur-lg z-40 transform transition-transform duration-300 ${isLeftSidebarOpen ? 'translate-x-0' : '-translate-x-full'}` 
+          : 'w-16 bg-teal-900/90 backdrop-blur-lg'
+      } border-r border-teal-700/50 flex flex-col items-center py-2 md:py-4 space-y-2`}>
         {isMobile && (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setIsLeftSidebarOpen(false)}
-            className="text-white hover:bg-slate-800 mb-2 h-8 w-8 p-0"
+            className="text-white hover:bg-teal-800 mb-2 h-8 w-8 p-0"
           >
             <X className="w-3 h-3" />
           </Button>
@@ -114,16 +128,32 @@ const AnnotationWorkspace = ({
 
       {/* Main workspace */}
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Mobile annotation toolbar */}
+        {isMobile && uploadedImage && (
+          <MobileAnnotationToolbar
+            selectedTool={selectedTool}
+            onToolSelect={setSelectedTool}
+            zoom={zoom}
+            showHeatmap={showHeatmap}
+            gridVisible={gridVisible}
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
+            onResetZoom={handleResetZoom}
+            onToggleHeatmap={handleToggleHeatmap}
+            onToggleGrid={handleToggleGrid}
+          />
+        )}
+
         {/* Header */}
-        <div className="bg-slate-800/90 border-b border-slate-700/50 px-2 md:px-4 py-2 md:py-3 flex items-center justify-between">
+        <div className="bg-teal-800/90 border-b border-teal-700/50 px-2 md:px-4 py-2 md:py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2 md:space-x-4 min-w-0">
             <h3 className="text-white font-semibold text-sm md:text-base truncate">{displayFileName}</h3>
-            <div className="hidden lg:flex items-center space-x-2 text-sm text-slate-400">
+            <div className="hidden lg:flex items-center space-x-2 text-sm text-teal-300">
               {uploadedImage ? (
                 <>
                   <span>Custom Upload</span>
                   <span>•</span>
-                  <span className="text-green-400">Image Loaded</span>
+                  <span className="text-cyan-400">Image Loaded</span>
                 </>
               ) : (
                 <>
@@ -133,22 +163,22 @@ const AnnotationWorkspace = ({
                 </>
               )}
               <span>•</span>
-              <span className="text-yellow-400">MONAI Ready</span>
+              <span className="text-teal-300">MONAI Ready</span>
             </div>
           </div>
           
           <div className="flex items-center space-x-1 md:space-x-2">
-            <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white h-8 w-8 p-0 hidden md:flex">
+            <Button variant="ghost" size="sm" className="text-teal-200 hover:text-white hover:bg-teal-700 h-8 w-8 p-0 hidden md:flex">
               <Undo className="w-3 h-3 md:w-4 md:h-4" />
             </Button>
-            <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white h-8 w-8 p-0 hidden md:flex">
+            <Button variant="ghost" size="sm" className="text-teal-200 hover:text-white hover:bg-teal-700 h-8 w-8 p-0 hidden md:flex">
               <Redo className="w-3 h-3 md:w-4 md:h-4" />
             </Button>
-            <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white h-8 px-2">
+            <Button variant="ghost" size="sm" className="text-teal-200 hover:text-white hover:bg-teal-700 h-8 px-2">
               <Save className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
               <span className="hidden md:inline text-xs">Save</span>
             </Button>
-            <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white h-8 px-2 hidden lg:flex">
+            <Button variant="ghost" size="sm" className="text-teal-200 hover:text-white hover:bg-teal-700 h-8 px-2 hidden lg:flex">
               <Download className="w-4 h-4 mr-2" />
               Export
             </Button>
@@ -166,7 +196,7 @@ const AnnotationWorkspace = ({
             showHeatmap={showHeatmap}
             gridVisible={gridVisible}
             onZoomChange={onZoomChange}
-            hideControls={true}
+            hideControls={isMobile}
           />
         </div>
       </div>
@@ -174,25 +204,25 @@ const AnnotationWorkspace = ({
       {/* Right sidebar */}
       <div className={`${
         isMobile 
-          ? `fixed top-0 right-0 h-full w-80 bg-slate-900/95 backdrop-blur-lg z-40 transform transition-transform duration-300 ${isRightSidebarOpen ? 'translate-x-0' : 'translate-x-full'}` 
-          : 'w-80 bg-slate-900/90 backdrop-blur-lg'
-      } border-l border-slate-700/50`}>
+          ? `fixed top-0 right-0 h-full w-80 bg-teal-900/95 backdrop-blur-lg z-40 transform transition-transform duration-300 ${isRightSidebarOpen ? 'translate-x-0' : 'translate-x-full'}` 
+          : 'w-80 bg-teal-900/90 backdrop-blur-lg'
+      } border-l border-teal-700/50`}>
         <Tabs value={sidebarTab} onValueChange={setSidebarTab} className="h-full flex flex-col">
           <div className="flex items-center justify-between p-2">
-            <TabsList className="grid w-full grid-cols-4 bg-slate-800/50 h-16">
-              <TabsTrigger value="ai" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-teal-600">
+            <TabsList className="grid w-full grid-cols-4 bg-teal-800/50 h-16">
+              <TabsTrigger value="ai" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-cyan-600">
                 <Zap className="w-3 h-3" />
                 <span className="text-xs">MONAI</span>
               </TabsTrigger>
-              <TabsTrigger value="layers" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-teal-600">
+              <TabsTrigger value="layers" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-cyan-600">
                 <Layers className="w-3 h-3" />
                 <span className="text-xs">Layers</span>
               </TabsTrigger>
-              <TabsTrigger value="team" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-teal-600">
+              <TabsTrigger value="team" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-cyan-600">
                 <Users className="w-3 h-3" />
                 <span className="text-xs">Team</span>
               </TabsTrigger>
-              <TabsTrigger value="annotate" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-teal-600">
+              <TabsTrigger value="annotate" className="flex flex-col items-center space-y-1 py-2 data-[state=active]:bg-cyan-600">
                 <Edit3 className="w-3 h-3" />
                 <span className="text-xs">Annotate</span>
               </TabsTrigger>
@@ -202,7 +232,7 @@ const AnnotationWorkspace = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsRightSidebarOpen(false)}
-                className="text-white hover:bg-slate-800 ml-2 h-8 w-8 p-0"
+                className="text-white hover:bg-teal-800 ml-2 h-8 w-8 p-0"
               >
                 <X className="w-3 h-3" />
               </Button>
