@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Layers, Zap, Users, Edit3, Download, Save, Undo, Redo, Upload, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,7 @@ import ImageUpload from './ImageUpload';
 import MobileAnnotationInterface from './MobileAnnotationInterface';
 import MobileAnnotationToolbar from './MobileAnnotationToolbar';
 import MobileDropdownHeader from './MobileDropdownHeader';
+import FloatingMobileControls from './FloatingMobileControls';
 import { Project, Annotation } from '../types';
 import { useIsMobile } from '../hooks/use-mobile';
 import { useAnnotationTools } from '../hooks/useAnnotationTools';
@@ -175,23 +175,7 @@ const AnnotationWorkspace = ({
           />
         )}
 
-        {/* Mobile annotation toolbar */}
-        {isMobile && uploadedImage && (
-          <MobileAnnotationToolbar
-            selectedTool={selectedTool}
-            onToolSelect={setSelectedTool}
-            zoom={zoom}
-            showHeatmap={showHeatmap}
-            gridVisible={gridVisible}
-            onZoomIn={handleZoomIn}
-            onZoomOut={handleZoomOut}
-            onResetZoom={handleResetZoom}
-            onToggleHeatmap={handleToggleHeatmap}
-            onToggleGrid={handleToggleGrid}
-          />
-        )}
-
-        {/* Image viewer */}
+        {/* Image viewer - full screen on mobile */}
         <div className="flex-1 min-h-0">
           <ImageViewer 
             selectedTool={selectedTool} 
@@ -205,6 +189,20 @@ const AnnotationWorkspace = ({
             hideControls={isMobile}
           />
         </div>
+
+        {/* Floating controls for mobile */}
+        {isMobile && uploadedImage && (
+          <FloatingMobileControls
+            zoom={zoom}
+            showHeatmap={showHeatmap}
+            gridVisible={gridVisible}
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
+            onResetZoom={handleResetZoom}
+            onToggleHeatmap={handleToggleHeatmap}
+            onToggleGrid={handleToggleGrid}
+          />
+        )}
       </div>
 
       {/* Right sidebar - only visible on desktop */}

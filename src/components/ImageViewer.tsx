@@ -61,19 +61,22 @@ const ImageViewer = ({
 
   return (
     <div className="relative h-full flex flex-col bg-gradient-to-br from-teal-950 via-teal-900 to-cyan-950">
-      <ImageViewerControls
-        zoom={zoom}
-        showHeatmap={showHeatmap}
-        gridVisible={gridVisible}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onResetZoom={handleResetZoom}
-        onToggleHeatmap={handleToggleHeatmap}
-        onToggleGrid={handleToggleGrid}
-        hideControls={hideControls}
-      />
+      {/* Only show controls on desktop or when not hidden */}
+      {!isMobile && !hideControls && (
+        <ImageViewerControls
+          zoom={zoom}
+          showHeatmap={showHeatmap}
+          gridVisible={gridVisible}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onResetZoom={handleResetZoom}
+          onToggleHeatmap={handleToggleHeatmap}
+          onToggleGrid={handleToggleGrid}
+          hideControls={hideControls}
+        />
+      )}
 
-      {/* Tool info - only show on desktop or if no custom toolbar */}
+      {/* Tool info - only show on desktop */}
       {!isMobile && (
         <div className="absolute top-1 md:top-2 right-1 md:right-2 z-20 bg-teal-900/95 backdrop-blur-lg rounded-lg p-1 md:p-2 border border-teal-700/50">
           <div className="text-teal-200 text-xs">
@@ -86,8 +89,8 @@ const ImageViewer = ({
         </div>
       )}
 
-      {/* Main image container */}
-      <div className="flex-1 flex items-center justify-center overflow-hidden p-1 md:p-4">
+      {/* Main image container - full height on mobile */}
+      <div className={`flex-1 flex items-center justify-center overflow-hidden ${isMobile ? 'p-0' : 'p-1 md:p-4'}`}>
         {uploadedImage ? (
           <ImageCanvas
             selectedTool={selectedTool}
@@ -107,12 +110,15 @@ const ImageViewer = ({
         )}
       </div>
 
-      <ImageViewerStats
-        annotations={annotations}
-        aiAnnotations={aiAnnotations}
-        uploadedImage={uploadedImage}
-        zoom={zoom}
-      />
+      {/* Stats - only show on desktop */}
+      {!isMobile && (
+        <ImageViewerStats
+          annotations={annotations}
+          aiAnnotations={aiAnnotations}
+          uploadedImage={uploadedImage}
+          zoom={zoom}
+        />
+      )}
     </div>
   );
 };

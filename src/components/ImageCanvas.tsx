@@ -287,17 +287,17 @@ const ImageCanvas = ({
   return (
     <div 
       ref={containerRef}
-      className="relative"
+      className="relative w-full h-full flex items-center justify-center"
       style={{ transform: `scale(${zoom / 100})` }}
     >
       <img
         ref={imageRef}
         src={uploadedImage}
         alt={uploadedImageName || "Medical image"}
-        className="max-w-none bg-slate-800 rounded-lg shadow-2xl"
+        className="max-w-full max-h-full bg-slate-800 rounded-lg shadow-2xl object-contain"
         style={{ 
-          maxWidth: isMobile ? '320px' : '700px', 
-          maxHeight: isMobile ? '320px' : '500px',
+          maxWidth: isMobile ? '100vw' : '700px', 
+          maxHeight: isMobile ? '100vh' : '500px',
           width: 'auto',
           height: 'auto'
         }}
