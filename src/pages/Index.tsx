@@ -8,7 +8,7 @@ import Dashboard from '../components/Dashboard';
 import AnnotationWorkspace from '../components/AnnotationWorkspace';
 import MedicalAnalysis from '../components/MedicalAnalysis';
 import ImageUpload from '../components/ImageUpload';
-import { Project } from '../types';
+import { Project, User } from '../types';
 import { useIsMobile } from '../hooks/use-mobile';
 
 const Index = () => {
@@ -22,6 +22,15 @@ const Index = () => {
 
   const isMobile = useIsMobile();
 
+  // Mock users for collaborators
+  const mockUsers: User[] = [
+    { id: '1', name: 'Dr. Smith', email: 'smith@hospital.com', role: 'admin', isOnline: true },
+    { id: '2', name: 'Dr. Johnson', email: 'johnson@hospital.com', role: 'annotator', isOnline: false },
+    { id: '3', name: 'Dr. Williams', email: 'williams@hospital.com', role: 'reviewer', isOnline: true },
+    { id: '4', name: 'Dr. Brown', email: 'brown@hospital.com', role: 'annotator', isOnline: true },
+    { id: '5', name: 'Dr. Davis', email: 'davis@hospital.com', role: 'reviewer', isOnline: false }
+  ];
+
   const mockProjects: Project[] = [
     {
       id: '1',
@@ -30,9 +39,13 @@ const Index = () => {
       lastModified: '2024-01-15',
       imageCount: 12,
       annotationCount: 45,
-      collaborators: 3,
+      collaborators: [mockUsers[0], mockUsers[1], mockUsers[2]],
       status: 'active',
-      priority: 'high'
+      priority: 'high',
+      createdAt: '2024-01-01',
+      updatedAt: '2024-01-15',
+      owner: mockUsers[0],
+      aiSuggestions: 15
     },
     {
       id: '2',
@@ -41,9 +54,13 @@ const Index = () => {
       lastModified: '2024-01-10',
       imageCount: 8,
       annotationCount: 32,
-      collaborators: 5,
-      status: 'pending',
-      priority: 'medium'
+      collaborators: [mockUsers[0], mockUsers[1], mockUsers[3], mockUsers[4]],
+      status: 'active',
+      priority: 'medium',
+      createdAt: '2023-12-15',
+      updatedAt: '2024-01-10',
+      owner: mockUsers[1],
+      aiSuggestions: 8
     },
     {
       id: '3',
@@ -52,9 +69,13 @@ const Index = () => {
       lastModified: '2023-12-28',
       imageCount: 5,
       annotationCount: 20,
-      collaborators: 2,
+      collaborators: [mockUsers[2], mockUsers[4]],
       status: 'completed',
-      priority: 'low'
+      priority: 'low',
+      createdAt: '2023-12-01',
+      updatedAt: '2023-12-28',
+      owner: mockUsers[2],
+      aiSuggestions: 5
     }
   ];
 
@@ -87,7 +108,11 @@ const Index = () => {
   if (currentView === 'project' && currentProject) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-teal-950 via-teal-900 to-cyan-950">
-        <Header />
+        <Header 
+          activeView="annotation"
+          onBackToDashboard={handleBackToDashboard}
+          selectedProject={currentProject}
+        />
         <div className="pt-16">
           <AnnotationWorkspace 
             project={currentProject} 
@@ -100,7 +125,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-950 via-teal-900 to-cyan-950">
-      <Header />
+      <Header 
+        activeView="dashboard"
+        onBackToDashboard={handleBackToDashboard}
+      />
       
       <main className="pt-16">
         <div className="container mx-auto px-4 py-8">
@@ -218,7 +246,6 @@ const Index = () => {
                 <Card className="bg-teal-800/50 border-teal-700/50 backdrop-blur-lg">
                   <CardContent className="p-0">
                     <Dashboard 
-                      projects={mockProjects} 
                       onProjectOpen={handleProjectOpen}
                     />
                   </CardContent>
