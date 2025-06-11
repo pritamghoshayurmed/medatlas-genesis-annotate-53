@@ -1,4 +1,3 @@
-
 import { Annotation } from '../types';
 
 export const generateHeatmapPoints = (
@@ -6,7 +5,7 @@ export const generateHeatmapPoints = (
   imageHeight: number,
   annotations: Annotation[]
 ) => {
-  const points: { x: number; y: number; intensity: number }[] = [];
+  const points: { x: number; y: number; intensity: number; region: string; color: string }[] = [];
   
   annotations.forEach(annotation => {
     if (annotation.coordinates && annotation.coordinates.length > 0) {
@@ -14,9 +13,11 @@ export const generateHeatmapPoints = (
       annotation.coordinates.forEach(coord => {
         const [x, y] = coord;
         const intensity = annotation.confidence || 0.5;
+        const region = annotation.label || 'Unknown';
+        const color = annotation.color || '#fbbf24';
         
         // Add the main point
-        points.push({ x, y, intensity });
+        points.push({ x, y, intensity, region, color });
         
         // Add surrounding points for better heat effect
         const radius = 20;
@@ -28,7 +29,9 @@ export const generateHeatmapPoints = (
           points.push({
             x: Math.max(0, Math.min(imageWidth, x + offsetX)),
             y: Math.max(0, Math.min(imageHeight, y + offsetY)),
-            intensity: intensity * 0.3
+            intensity: intensity * 0.3,
+            region,
+            color
           });
         }
       });
@@ -36,6 +39,27 @@ export const generateHeatmapPoints = (
   });
 
   return points;
+};
+
+export const calculateAnnotationMetrics = (annotations: Annotation[]) => {
+  const total = annotations.length;
+  const aiGenerated = annotations.filter(a => a.isAIGenerated).length;
+  const manual = total - aiGenerated;
+  
+  const confidenceValues = annotations
+    .filter(a => a.confidence !== undefined)
+    .map(a => a.confidence || 0);
+  
+  const avgConfidence = confidenceValues.length > 0 
+    ? Math.round((confidenceValues.reduce((sum, conf) => sum + conf, 0) / confidenceValues.length) * 100)
+    : 0;
+
+  return {
+    total,
+    aiGenerated,
+    manual,
+    avgConfidence
+  };
 };
 
 export const generateRandomAIAnnotations = (imageWidth: number, imageHeight: number, count: number = 3): Annotation[] => {
