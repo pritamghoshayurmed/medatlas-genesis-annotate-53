@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { ArrowLeft, Users, Settings, Upload, FileText, Brain, Scan, Stethoscope, Home, Calendar, MessageCircle, User, ZoomIn, ZoomOut, RotateCcw, Eye, Grid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -376,7 +375,6 @@ const Index = () => {
             {analysisImage && (
               <div className="pt-4">
                 <MedicalAnalysis 
-                  imageFile={null}
                   scanType="mri"
                 />
               </div>
