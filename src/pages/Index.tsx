@@ -20,9 +20,15 @@ const Index = () => {
   const [activeView, setActiveView] = useState<'home' | 'annotation'>('home');
   const [activeTab, setActiveTab] = useState<'analyze' | 'annotate'>('analyze');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [uploadedImage, setUploadedImage] = useState<string>('');
-  const [uploadedImageName, setUploadedImageName] = useState<string>('');
+  
+  // Analysis section state (completely independent)
+  const [analysisImage, setAnalysisImage] = useState<string>('');
+  const [analysisImageName, setAnalysisImageName] = useState<string>('');
   const [analysisOptions, setAnalysisOptions] = useState(false);
+  
+  // Annotation section state (completely independent)
+  const [annotationImage, setAnnotationImage] = useState<string>('');
+  const [annotationImageName, setAnnotationImageName] = useState<string>('');
   const [selectedTool, setSelectedTool] = useState<string>('select');
   const [aiAnnotations, setAiAnnotations] = useState<Annotation[]>([]);
   const [sidebarTab, setSidebarTab] = useState('ai');
@@ -77,20 +83,38 @@ const Index = () => {
     setSelectedProject(null);
   };
 
-  const handleImageUpload = (imageUrl: string, fileName: string) => {
-    setUploadedImage(imageUrl);
-    setUploadedImageName(fileName);
-    console.log('Image uploaded:', fileName);
+  // Analysis section handlers
+  const handleAnalysisImageUpload = (imageUrl: string, fileName: string) => {
+    setAnalysisImage(imageUrl);
+    setAnalysisImageName(fileName);
+    console.log('Analysis image uploaded:', fileName);
   };
 
-  const handleClearImage = () => {
-    if (uploadedImage) {
-      URL.revokeObjectURL(uploadedImage);
+  const handleAnalysisImageClear = () => {
+    if (analysisImage) {
+      URL.revokeObjectURL(analysisImage);
     }
-    setUploadedImage('');
-    setUploadedImageName('');
+    setAnalysisImage('');
+    setAnalysisImageName('');
+    console.log('Analysis image cleared');
+  };
+
+  // Annotation section handlers
+  const handleAnnotationImageUpload = (imageUrl: string, fileName: string) => {
+    setAnnotationImage(imageUrl);
+    setAnnotationImageName(fileName);
+    setAiAnnotations([]); // Clear previous annotations when new image is uploaded
+    console.log('Annotation image uploaded:', fileName);
+  };
+
+  const handleAnnotationImageClear = () => {
+    if (annotationImage) {
+      URL.revokeObjectURL(annotationImage);
+    }
+    setAnnotationImage('');
+    setAnnotationImageName('');
     setAiAnnotations([]);
-    console.log('Image cleared');
+    console.log('Annotation image cleared');
   };
 
   const handleAIAnnotationsGenerated = (newAnnotations: Annotation[]) => {
@@ -310,7 +334,7 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            {/* Image Upload Section */}
+            {/* Image Upload Section for Analysis */}
             <Card className="bg-white border-2 border-dashed border-teal-300 shadow-md">
               <CardContent className="p-6">
                 <div className="text-center">
@@ -322,9 +346,9 @@ const Index = () => {
                   <p className="text-xs text-gray-400 mb-4">Maximum file size: 4MB (Gemini API limit)</p>
                   
                   <ImageUpload 
-                    onImageUpload={handleImageUpload}
-                    currentImage={uploadedImage}
-                    onClearImage={handleClearImage}
+                    onImageUpload={handleAnalysisImageUpload}
+                    currentImage={analysisImage}
+                    onClearImage={handleAnalysisImageClear}
                   />
                 </div>
               </CardContent>
@@ -349,14 +373,12 @@ const Index = () => {
             </div>
 
             {/* Start Analysis Button */}
-            {uploadedImage && (
+            {analysisImage && (
               <div className="pt-4">
-                <Button 
-                  onClick={handleStartAnalysis}
-                  className="w-full bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white py-3 shadow-md"
-                >
-                  Start Analysis & Annotation
-                </Button>
+                <MedicalAnalysis 
+                  imageFile={null}
+                  scanType="mri"
+                />
               </div>
             )}
           </>
@@ -364,7 +386,7 @@ const Index = () => {
 
         {activeTab === 'annotate' && (
           <div className="bg-gradient-to-br from-teal-950 via-teal-900 to-cyan-950 rounded-lg min-h-[600px] relative shadow-lg border border-teal-700">
-            {uploadedImage ? (
+            {annotationImage ? (
               <div className="flex h-[600px]">
                 {/* Left sidebar - tools */}
                 <div className="w-16 bg-teal-900/90 backdrop-blur-lg border-r border-teal-700/50 flex flex-col items-center py-4 space-y-2 rounded-l-lg">
@@ -379,7 +401,7 @@ const Index = () => {
                   {/* Header */}
                   <div className="bg-teal-800/90 border-b border-teal-700/50 px-4 py-3 flex items-center justify-between">
                     <div className="flex items-center space-x-4 min-w-0">
-                      <h3 className="text-white font-semibold text-base truncate">{uploadedImageName || 'medical_image.jpg'}</h3>
+                      <h3 className="text-white font-semibold text-base truncate">{annotationImageName || 'medical_image.jpg'}</h3>
                       <div className="hidden lg:flex items-center space-x-2 text-sm text-teal-300">
                         <span>Custom Upload</span>
                         <span>•</span>
@@ -395,8 +417,8 @@ const Index = () => {
                     <ImageViewer 
                       selectedTool={selectedTool} 
                       aiAnnotations={aiAnnotations}
-                      uploadedImage={uploadedImage}
-                      uploadedImageName={uploadedImageName}
+                      uploadedImage={annotationImage}
+                      uploadedImageName={annotationImageName}
                       zoom={zoom}
                       showHeatmap={showHeatmap}
                       gridVisible={gridVisible}
@@ -429,7 +451,23 @@ const Index = () => {
                     <div className="flex-1 overflow-hidden">
                       <TabsContent value="ai" className="h-full m-0">
                         <div className="p-4 h-full overflow-y-auto">
-                          <AIAssistPanel onAnnotationsGenerated={handleAIAnnotationsGenerated} />
+                          <div className="mb-4">
+                            <h3 className="text-white font-semibold mb-3 flex items-center text-sm">
+                              <Upload className="w-4 h-4 mr-2" />
+                              Upload Image
+                            </h3>
+                            <ImageUpload 
+                              onImageUpload={handleAnnotationImageUpload}
+                              currentImage={annotationImage}
+                              onClearImage={handleAnnotationImageClear}
+                            />
+                          </div>
+                          <AIAssistPanel 
+                            onAnnotationsGenerated={handleAIAnnotationsGenerated}
+                            imageUrl={annotationImage}
+                            imageWidth={800}
+                            imageHeight={600}
+                          />
                         </div>
                       </TabsContent>
                       <TabsContent value="layers" className="h-full m-0">
@@ -451,7 +489,7 @@ const Index = () => {
                   <div className="bg-teal-800/50 rounded-lg p-8 border-2 border-dashed border-teal-600">
                     <Upload className="w-16 h-16 mx-auto mb-4 text-teal-400" />
                     <p className="text-lg mb-2">No image uploaded</p>
-                    <p className="text-sm">Upload an image in the "Analyze" tab to start annotating</p>
+                    <p className="text-sm">Upload an image in the AI panel to start annotating</p>
                   </div>
                 </div>
               </div>

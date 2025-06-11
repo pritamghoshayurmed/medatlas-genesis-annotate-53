@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Layers, Zap, Users, Edit3, Download, Save, Undo, Redo, Upload, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -36,8 +37,10 @@ const AnnotationWorkspace = ({
   const [selectedTool, setSelectedTool] = useState<string>('select');
   const [sidebarTab, setSidebarTab] = useState('ai');
   const [aiAnnotations, setAiAnnotations] = useState<Annotation[]>([]);
-  const [uploadedImage, setUploadedImage] = useState<string>('');
-  const [uploadedImageName, setUploadedImageName] = useState<string>('');
+  
+  // Independent image state for annotation workspace
+  const [workspaceImage, setWorkspaceImage] = useState<string>('');
+  const [workspaceImageName, setWorkspaceImageName] = useState<string>('');
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
   const [imageDimensions, setImageDimensions] = useState({ width: 800, height: 600 });
@@ -53,34 +56,35 @@ const AnnotationWorkspace = ({
   const { annotations } = useAnnotationTools();
 
   const handleAIAnnotationsGenerated = (newAnnotations: Annotation[]) => {
-    console.log('New AI annotations received:', newAnnotations);
+    console.log('New AI annotations received in workspace:', newAnnotations);
     setAiAnnotations(prev => [...prev, ...newAnnotations]);
   };
 
-  const handleImageUpload = (imageUrl: string, fileName: string) => {
-    setUploadedImage(imageUrl);
-    setUploadedImageName(fileName);
+  // Independent image handlers for workspace
+  const handleWorkspaceImageUpload = (imageUrl: string, fileName: string) => {
+    setWorkspaceImage(imageUrl);
+    setWorkspaceImageName(fileName);
     
     // Get image dimensions when uploaded
     const img = new Image();
     img.onload = () => {
       setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
-      console.log('Image dimensions updated:', { width: img.naturalWidth, height: img.naturalHeight });
+      console.log('Workspace image dimensions updated:', { width: img.naturalWidth, height: img.naturalHeight });
     };
     img.src = imageUrl;
     
-    console.log('Image uploaded:', fileName);
+    console.log('Workspace image uploaded:', fileName);
   };
 
-  const handleClearImage = () => {
-    if (uploadedImage) {
-      URL.revokeObjectURL(uploadedImage);
+  const handleWorkspaceImageClear = () => {
+    if (workspaceImage) {
+      URL.revokeObjectURL(workspaceImage);
     }
-    setUploadedImage('');
-    setUploadedImageName('');
+    setWorkspaceImage('');
+    setWorkspaceImageName('');
     setAiAnnotations([]);
     setImageDimensions({ width: 800, height: 600 });
-    console.log('Image cleared');
+    console.log('Workspace image cleared');
   };
 
   // Mobile-specific handlers
@@ -111,18 +115,7 @@ const AnnotationWorkspace = ({
     console.log('Mobile grid toggled to:', !mobileGridVisible);
   };
 
-  // Desktop handlers (fallback)
-  const handleZoomIn = () => onZoomChange && onZoomChange(Math.min(zoom + 25, 400));
-  const handleZoomOut = () => onZoomChange && onZoomChange(Math.max(zoom - 25, 25));
-  const handleResetZoom = () => onZoomChange && onZoomChange(100);
-  const handleToggleHeatmap = () => {
-    console.log('Toggle heatmap');
-  };
-  const handleToggleGrid = () => {
-    console.log('Toggle grid');
-  };
-
-  const displayFileName = uploadedImageName || 'brain_scan_001.dcm';
+  const displayFileName = workspaceImageName || 'brain_scan_001.dcm';
 
   // Use mobile state on mobile, external state on desktop
   const currentZoom = isMobile ? mobileZoom : zoom;
@@ -175,7 +168,7 @@ const AnnotationWorkspace = ({
             <div className="flex items-center space-x-2 md:space-x-4 min-w-0">
               <h3 className="text-white font-semibold text-sm md:text-base truncate">{displayFileName}</h3>
               <div className="hidden lg:flex items-center space-x-2 text-sm text-teal-300">
-                {uploadedImage ? (
+                {workspaceImage ? (
                   <>
                     <span>Custom Upload</span>
                     <span>•</span>
@@ -214,9 +207,9 @@ const AnnotationWorkspace = ({
           <MobileDropdownHeader 
             annotations={annotations}
             aiAnnotations={aiAnnotations}
-            uploadedImage={uploadedImage}
-            onImageUpload={handleImageUpload}
-            onClearImage={handleClearImage}
+            uploadedImage={workspaceImage}
+            onImageUpload={handleWorkspaceImageUpload}
+            onClearImage={handleWorkspaceImageClear}
             onAIAnnotationsGenerated={handleAIAnnotationsGenerated}
             selectedTool={selectedTool}
             onToolSelect={setSelectedTool}
@@ -228,8 +221,8 @@ const AnnotationWorkspace = ({
           <ImageViewer 
             selectedTool={selectedTool} 
             aiAnnotations={aiAnnotations}
-            uploadedImage={uploadedImage}
-            uploadedImageName={uploadedImageName}
+            uploadedImage={workspaceImage}
+            uploadedImageName={workspaceImageName}
             zoom={currentZoom}
             showHeatmap={currentShowHeatmap}
             gridVisible={currentGridVisible}
@@ -239,7 +232,7 @@ const AnnotationWorkspace = ({
         </div>
 
         {/* Floating controls for mobile */}
-        {isMobile && uploadedImage && (
+        {isMobile && workspaceImage && (
           <FloatingMobileControls
             zoom={currentZoom}
             showHeatmap={currentShowHeatmap}
@@ -287,15 +280,15 @@ const AnnotationWorkspace = ({
                       Medical Image
                     </h3>
                     <ImageUpload 
-                      onImageUpload={handleImageUpload}
-                      currentImage={uploadedImage}
-                      onClearImage={handleClearImage}
+                      onImageUpload={handleWorkspaceImageUpload}
+                      currentImage={workspaceImage}
+                      onClearImage={handleWorkspaceImageClear}
                     />
                   </div>
                   <div className="flex-1">
                     <AIAssistPanel 
                       onAnnotationsGenerated={handleAIAnnotationsGenerated}
-                      imageUrl={uploadedImage}
+                      imageUrl={workspaceImage}
                       imageWidth={imageDimensions.width}
                       imageHeight={imageDimensions.height}
                     />
@@ -317,9 +310,9 @@ const AnnotationWorkspace = ({
                   onToolSelect={setSelectedTool}
                   annotations={annotations}
                   aiAnnotations={aiAnnotations}
-                  uploadedImage={uploadedImage}
-                  onImageUpload={handleImageUpload}
-                  onClearImage={handleClearImage}
+                  uploadedImage={workspaceImage}
+                  onImageUpload={handleWorkspaceImageUpload}
+                  onClearImage={handleWorkspaceImageClear}
                 />
               </TabsContent>
             </div>
