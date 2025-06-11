@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Zap, Brain, Activity, Target, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -174,7 +175,32 @@ const AIAssistPanel = ({
           <CardTitle className="text-white text-sm">Available Models</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {aiModels.map((model) => (
+          {[
+            {
+              id: 'brain-tumor',
+              name: 'Brain Tumor Segmentation',
+              description: 'Advanced tumor detection and boundary mapping',
+              icon: Brain,
+              accuracy: '94%',
+              status: 'ready'
+            },
+            {
+              id: 'lesion-detection',
+              name: 'Lesion Detection',
+              description: 'Identifies suspicious lesions and abnormalities',
+              icon: Target,
+              accuracy: '91%',
+              status: 'ready'
+            },
+            {
+              id: 'tissue-classification',
+              name: 'Tissue Classification',
+              description: 'Differentiates between healthy and pathological tissue',
+              icon: Activity,
+              accuracy: '88%',
+              status: 'ready'
+            }
+          ].map((model) => (
             <div key={model.id} className="p-3 bg-slate-700/30 rounded-lg">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-2">
@@ -203,7 +229,11 @@ const AIAssistPanel = ({
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {quickAnalysis.map((item, index) => (
+            {[
+              { label: 'Tumor Probability', value: '87%', color: 'text-red-400' },
+              { label: 'Tissue Health', value: 'Good', color: 'text-green-400' },
+              { label: 'Confidence Score', value: '92%', color: 'text-blue-400' }
+            ].map((item, index) => (
               <div key={index} className="flex justify-between items-center p-2 bg-slate-700/30 rounded">
                 <span className="text-slate-300 text-xs">{item.label}</span>
                 <span className={`text-xs font-medium ${item.color}`}>{item.value}</span>

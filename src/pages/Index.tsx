@@ -11,6 +11,7 @@ import AnnotationTools from '../components/AnnotationTools';
 import AIAssistPanel from '../components/AIAssistPanel';
 import LayersPanel from '../components/LayersPanel';
 import CollaborationPanel from '../components/CollaborationPanel';
+import MedicalAnalysis from '../components/MedicalAnalysis';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Project, Annotation } from '../types';
 import { useAnnotationTools } from '../hooks/useAnnotationTools';
