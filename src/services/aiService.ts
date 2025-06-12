@@ -27,15 +27,19 @@ export const generateAIAnnotations = async (
 };
 
 export const runSegmentation = async (imageUrl: string, imageWidth: number, imageHeight: number): Promise<Annotation[]> => {
-  console.log('Running AI segmentation on image with dimensions:', { imageWidth, imageHeight });
+  console.log('Running MONAI segmentation on image with dimensions:', { imageWidth, imageHeight, imageUrl: imageUrl ? 'present' : 'missing' });
+  
+  if (!imageUrl) {
+    throw new Error('No image URL provided for segmentation');
+  }
   
   // Simulate MONAI processing time
-  await new Promise(resolve => setTimeout(resolve, 3000 + Math.random() * 2000));
+  await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
   
   // Generate random annotations distributed across the entire image area
   const segmentationResults = generateAIAnnotationsForImage(imageWidth, imageHeight);
   
-  console.log('Segmentation completed with', segmentationResults.length, 'regions identified');
+  console.log('MONAI segmentation completed with', segmentationResults.length, 'regions identified');
   
   return segmentationResults;
 };

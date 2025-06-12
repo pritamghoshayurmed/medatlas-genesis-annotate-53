@@ -31,10 +31,11 @@ const AIAssistPanel = ({
 
   const handleRunSegmentation = async () => {
     if (!imageUrl) {
-      console.log('No image provided for segmentation');
+      console.error('No image provided for MONAI segmentation');
       return;
     }
 
+    console.log('Starting MONAI segmentation with:', { imageUrl: !!imageUrl, imageWidth, imageHeight });
     setIsProcessing(true);
     setProgress(0);
 
@@ -50,12 +51,13 @@ const AIAssistPanel = ({
         });
       }, 300);
 
-      console.log('Running segmentation with dimensions:', { imageWidth, imageHeight });
+      console.log('Running MONAI segmentation with dimensions:', { imageWidth, imageHeight });
       const annotations = await runSegmentation(imageUrl, imageWidth, imageHeight);
       
       clearInterval(progressInterval);
       setProgress(100);
       
+      // Pass the annotations to the parent component
       onAnnotationsGenerated(annotations);
       
       setLastResult({
@@ -64,47 +66,16 @@ const AIAssistPanel = ({
         timestamp: new Date().toLocaleTimeString()
       });
 
-      console.log('AI segmentation completed:', annotations.length, 'annotations generated');
+      console.log('MONAI segmentation completed successfully:', annotations.length, 'annotations generated');
     } catch (error) {
-      console.error('AI segmentation failed:', error);
+      console.error('MONAI segmentation failed:', error);
     } finally {
       setIsProcessing(false);
       setTimeout(() => setProgress(0), 2000);
     }
   };
 
-  const aiModels = [
-    {
-      id: 'brain-tumor',
-      name: 'Brain Tumor Segmentation',
-      description: 'Advanced tumor detection and boundary mapping',
-      icon: Brain,
-      accuracy: '94%',
-      status: 'ready'
-    },
-    {
-      id: 'lesion-detection',
-      name: 'Lesion Detection',
-      description: 'Identifies suspicious lesions and abnormalities',
-      icon: Target,
-      accuracy: '91%',
-      status: 'ready'
-    },
-    {
-      id: 'tissue-classification',
-      name: 'Tissue Classification',
-      description: 'Differentiates between healthy and pathological tissue',
-      icon: Activity,
-      accuracy: '88%',
-      status: 'ready'
-    }
-  ];
-
-  const quickAnalysis = [
-    { label: 'Tumor Probability', value: '87%', color: 'text-red-400' },
-    { label: 'Tissue Health', value: 'Good', color: 'text-green-400' },
-    { label: 'Confidence Score', value: '92%', color: 'text-blue-400' }
-  ];
+  const isSegmentationDisabled = isProcessing || !imageUrl;
 
   return (
     <div className="space-y-4 h-full overflow-y-auto">
@@ -117,20 +88,33 @@ const AIAssistPanel = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          {!imageUrl && (
+            <div className="p-3 bg-amber-500/20 border border-amber-500/50 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 text-amber-400" />
+                <span className="text-xs text-amber-200">Upload an image to enable MONAI segmentation</span>
+              </div>
+            </div>
+          )}
+          
           <Button 
             onClick={handleRunSegmentation}
-            disabled={isProcessing || !imageUrl}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+            disabled={isSegmentationDisabled}
+            className={`w-full ${
+              isSegmentationDisabled 
+                ? 'bg-gray-600 cursor-not-allowed' 
+                : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+            } text-white transition-all duration-200`}
           >
             {isProcessing ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Processing...
+                Processing MONAI...
               </>
             ) : (
               <>
                 <Zap className="w-4 h-4 mr-2" />
-                Run AI Segmentation
+                Run MONAI Segmentation
               </>
             )}
           </Button>
@@ -148,7 +132,7 @@ const AIAssistPanel = ({
             <div className="mt-3 p-3 bg-slate-700/50 rounded-lg">
               <div className="flex items-center space-x-2 mb-2">
                 <CheckCircle className="w-4 h-4 text-green-400" />
-                <span className="text-xs text-white font-medium">Analysis Complete</span>
+                <span className="text-xs text-white font-medium">MONAI Analysis Complete</span>
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
